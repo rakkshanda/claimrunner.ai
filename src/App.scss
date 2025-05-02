@@ -53,7 +53,7 @@ body {
 }
 
 .step-button {
-  background-color: #4caf50;
+  background-color: #0e5f8f;
   color: white;
   padding: 10px;
   border: none;
@@ -63,9 +63,14 @@ body {
   cursor: default;
 
   &.active {
-    border: 3px solid red;
+    border: 5px solid rgb(90, 147, 162);
     font-weight: bold;
+    &:hover{
+      border: 5px solid rgb(153, 176, 182);
+      font-weight: bold;
+    }
   }
+ 
 }
 
 .step-content {
@@ -77,7 +82,7 @@ body {
 }
 
 .step-header {
-  background-color: #ffeb3b;
+  background-color: rgb(203, 227, 255);
   padding: 10px;
   font-weight: bold;
   margin-bottom: 10px;
