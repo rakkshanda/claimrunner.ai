@@ -8,13 +8,13 @@
 ## 📦 Getting Started
 
 ### Clone the repo
-
+```
 git clone https://github.com/rakkshanda/claimrunner.ai.git
 cd claimrunner.ai
 npm install
 
-
-🧪 Scripts
+### Scripts
+```
 In the project directory, you can run:
 
 npm start
