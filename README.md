@@ -12,4 +12,5 @@ Clone the repo
 git clone https://github.com/rakkshanda/claimrunner.ai.git
 cd claimrunner.ai
 npm install
+npm start
 
