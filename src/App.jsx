@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Step1 from './components/step1';
 import Step2 from './components/step2';
 import Step3 from './components/step3';
@@ -13,7 +13,6 @@ import './App.scss';
 const App = () => {
   const [step, setStep] = useState(1);
   const [stepValid, setStepValid] = useState(true);
-
   const [formData, setFormData] = useState({
     step2: [],
     step3: '',
@@ -23,16 +22,7 @@ const App = () => {
     step7: '',
     step8: {},
   });
-
-  const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        ...data,
-      },
-    }));
-  };
+  const [completedSteps, setCompletedSteps] = useState([]);
 
   const steps = [
     'Hello!',
@@ -60,61 +50,96 @@ const App = () => {
     }
   };
 
+  const updateFormData = (section, data) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        ...data,
+      },
+    }));
+  };
+
   const handlePrev = () => {
     if (step > 1) {
       setStep(step - 1);
-      setStepValid(true);
     }
   };
 
   const handleNext = () => {
-    if (step < 8) {
+    if (step < 8 && stepValid) {
+      if (!completedSteps.includes(step)) {
+        setCompletedSteps(prev => [...prev, step]);
+      }
       setStep(step + 1);
-      setStepValid(true);
     }
   };
+
+  const handleTabClick = (index) => {
+    const targetStep = index + 1;
+    if (targetStep < step || completedSteps.includes(targetStep)) {
+      setStep(targetStep);
+    }
+  };
+
+  useEffect(() => {
+    if (stepValid && !completedSteps.includes(step)) {
+      setCompletedSteps(prev => [...prev, step]);
+    } else if (!stepValid && completedSteps.includes(step)) {
+      setCompletedSteps(prev => prev.filter(s => s !== step));
+    }
+  }, [stepValid, step]);
 
   return (
     <div className="app-wrapper">
       <h2 className="portal-title">Guided Small Claims Case Initiation-Portal</h2>
 
       <div className="step-box">
-      <div className="nav-buttons">
+        <div className="nav-buttons">
           {step > 1 && (
             <button onClick={handlePrev}>&#11013; Previous Step</button>
           )}
-          <button onClick={handleNext} disabled={!stepValid}>Next Step &#11157;  </button>
+          {step < 8 && (
+            <button onClick={handleNext} disabled={!stepValid}>
+              Next Step &#11157;
+            </button>
+          )}
         </div>
 
         <div className="step-container">
           <div className="step-sidebar">
             {steps.map((label, index) => {
-              const isCompleted = index + 1 < step;
-              const isCurrent = index + 1 === step;
+              const stepNum = index + 1;
+              const isCompleted = completedSteps.includes(stepNum);
+              const isCurrent = step === stepNum;
               const icon = isCompleted ? '✓' : isCurrent ? '📝' : '';
+
               return (
                 <button
                   key={index}
                   className={`step-button ${isCurrent ? 'active' : ''}`}
-                  disabled
+                  onClick={() => handleTabClick(index)}
+                  disabled={!isCompleted && !isCurrent}
                 >
-                  {icon && <span style={{ marginRight: '8px', color: 'white' }}>{icon}</span>}
+                  {icon && <span style={{ marginRight: '8px', color: isCurrent  ? 'white' : 'black' }}>{icon}</span>}
                   {label}
                 </button>
               );
             })}
           </div>
 
-          <div className="step-content">
-            {renderStep()}
-          </div>
+          <div className="step-content">{renderStep()}</div>
         </div>
 
         <div className="nav-buttons">
           {step > 1 && (
             <button onClick={handlePrev}>&#11013; Previous Step</button>
           )}
-          <button onClick={handleNext} disabled={!stepValid}>Next Step &#11157;  </button>
+          {step < 8 && (
+            <button onClick={handleNext} disabled={!stepValid}>
+              Next Step &#11157;
+            </button>
+          )}
         </div>
       </div>
     </div>

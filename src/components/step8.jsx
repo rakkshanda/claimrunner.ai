@@ -88,7 +88,7 @@ const Step8 = ({ formData, updateFormData }) => {
           onClick={handleSubmit}
           disabled={!isComplete}
         >
-          🔵 Proceed
+          Proceed
         </button>
       </div>
     </div>
