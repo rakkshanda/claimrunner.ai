@@ -16,9 +16,6 @@ git clone https://github.com/rakkshanda/claimrunner.ai.git
 cd claimrunner.ai
 npm install
 Start the dev server
-bash
-Copy
-Edit
 npm start
 Open http://localhost:3000 to view it in your browser.
 
