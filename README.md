@@ -1,25 +1,18 @@
 ## 🛠️ Tech Stack
 
-- **React.js** – Component-based UI framework
-- **SCSS** – Styling across components
-- **Create React App** – App bootstrapping
-- **Vanilla Form Handling** – Custom validation logic
-
----
+- **React.js** – Component-based UI framework  
+- **SCSS** – Styling across components  
+- **Create React App** – App bootstrapping  
+- **Vanilla Form Handling** – Custom validation logic  
 
 ## 📦 Getting Started
 
 ### Clone the repo
 
-```bash
 git clone https://github.com/rakkshanda/claimrunner.ai.git
 cd claimrunner.ai
 npm install
-Start the dev server
-npm start
-Open http://localhost:3000 to view it in your browser.
 
-The page reloads on save, and you’ll see lint errors in the console if any.
 
 🧪 Scripts
 In the project directory, you can run:
