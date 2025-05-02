@@ -14,3 +14,8 @@ cd claimrunner.ai
 npm install
 npm start
 
+
+To deploy
+npm run build
+npm run deploy
+It should get upated here https://rakkshanda.github.io/claimrunner.ai/

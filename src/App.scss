@@ -102,9 +102,37 @@ body {
 }
 .nav-buttons {
   display: flex;
-  gap: 10px;
-  margin: 15px 0;
+  justify-content: left;
+  gap: 12px;
+  margin: 20px 0;
+
+  button {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 6px 16px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #f7f7f7;
+      border-color: #999;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
 }
+
 .acknowledgments-form div {
   margin-bottom: 12px;
 }

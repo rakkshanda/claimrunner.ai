@@ -79,24 +79,30 @@ const App = () => {
       <h2 className="portal-title">Guided Small Claims Case Initiation-Portal</h2>
 
       <div className="step-box">
-        <div className="nav-buttons">
+      <div className="nav-buttons">
           {step > 1 && (
-            <button onClick={handlePrev}>← Previous Step</button>
+            <button onClick={handlePrev}>&#11013; Previous Step</button>
           )}
-          <button onClick={handleNext} disabled={!stepValid}>Next Step →</button>
+          <button onClick={handleNext} disabled={!stepValid}>Next Step &#11157;  </button>
         </div>
 
         <div className="step-container">
           <div className="step-sidebar">
-            {steps.map((label, index) => (
-              <button
-                key={index}
-                className={`step-button ${step === index + 1 ? 'active' : ''}`}
-                disabled
-              >
-                {label}
-              </button>
-            ))}
+            {steps.map((label, index) => {
+              const isCompleted = index + 1 < step;
+              const isCurrent = index + 1 === step;
+              const icon = isCompleted ? '✓' : isCurrent ? '📝' : '';
+              return (
+                <button
+                  key={index}
+                  className={`step-button ${isCurrent ? 'active' : ''}`}
+                  disabled
+                >
+                  {icon && <span style={{ marginRight: '8px', color: 'white' }}>{icon}</span>}
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="step-content">
@@ -106,9 +112,9 @@ const App = () => {
 
         <div className="nav-buttons">
           {step > 1 && (
-            <button onClick={handlePrev}>← Previous Step</button>
+            <button onClick={handlePrev}>&#11013; Previous Step</button>
           )}
-          <button onClick={handleNext} disabled={!stepValid}>Next Step →</button>
+          <button onClick={handleNext} disabled={!stepValid}>Next Step &#11157;  </button>
         </div>
       </div>
     </div>
