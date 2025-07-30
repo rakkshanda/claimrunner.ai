@@ -1,6 +1,7 @@
 import './Home.scss';
 import { Link } from 'react-router-dom';
-
+import heroImage from '../media/homep.svg';
+import missionImage from '../media/mission.svg';
 function Home() {
   return (
     <div className="home">
@@ -17,7 +18,7 @@ function Home() {
             ClaimRunner makes it easy to file and manage small claims. Our guided tools help you
             understand your case, prepare and file your claim, and reach a resolution faster.
           </p>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Justice_Court.svg/512px-Justice_Court.svg.png" alt="Justice illustration" />
+         <img src={heroImage} alt="Justice illustration" />
         </div>
       </section>
 
@@ -72,7 +73,8 @@ function Home() {
           small claims process, from start to finish. For those who have found the legal system
           confusing or out of reach, we aim to make the process more understandable and more accessible.
         </p>
-        <img src="https://cdn-icons-png.flaticon.com/512/103/103495.png" alt="Justice icon" />
+                <img src={missionImage} alt="Mission illustration" />
+
       </section>
     </div>
   );
