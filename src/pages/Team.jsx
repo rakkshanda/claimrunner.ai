@@ -1,19 +1,15 @@
 import './Team.scss';
 
 const teamMembers = [
-  {
-    name: 'Rakshanda',
-    linkedin: 'https://www.linkedin.com/in/rakshanda',
-    img: '/profile.jpg'
-  },
+
   {
     name: 'Sam',
     linkedin: 'https://www.linkedin.com/in/sam',
     img: '/profile.jpg'
   },
-  {
-    name: 'Cole',
-    linkedin: 'https://www.linkedin.com/in/cole',
+   {
+    name: 'Nathan',
+    linkedin: 'https://www.linkedin.com/in/nathan',
     img: '/profile.jpg'
   },
   {
@@ -21,7 +17,18 @@ const teamMembers = [
     linkedin: 'https://www.linkedin.com/in/ruiqi',
     img: '/profile.jpg'
   },
+
   {
+    name: 'Cole',
+    linkedin: 'https://www.linkedin.com/in/cole',
+    img: '/profile.jpg'
+  },
+    {
+    name: 'Rakshanda',
+    linkedin: 'https://www.linkedin.com/in/rakshanda',
+    img: '/profile.jpg'
+  },
+    {
     name: 'Khoa',
     linkedin: 'https://www.linkedin.com/in/khoa',
     img: '/profile.jpg'
@@ -31,11 +38,8 @@ const teamMembers = [
     linkedin: 'https://www.linkedin.com/in/samridh',
     img: '/profile.jpg'
   },
-  {
-    name: 'Nathan',
-    linkedin: 'https://www.linkedin.com/in/nathan',
-    img: '/profile.jpg'
-  }
+ 
+  
 ];
 
 function Team() {

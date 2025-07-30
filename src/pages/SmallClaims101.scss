@@ -3,38 +3,68 @@
 
   h1 {
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-size: 2.5rem;
     color: #1169ee;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .subhead {
+    text-align: center;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
+    color: #333;
   }
 
   .intro {
-    text-align: center;
-    max-width: 700px;
+    max-width: 720px;
     margin: 0 auto 3rem;
+    text-align: center;
     font-size: 1.05rem;
+    line-height: 1.6;
+    color: #444;
   }
 
-  .steps-list {
+  .steps-vertical {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
 
-    .step-card {
-      background: #f5f9ff;
-      padding: 1.5rem;
-      border-radius: 10px;
+    .step-block {
+      background: #f8f9fb;
+      padding: 2rem;
       border-left: 6px solid #1169ee;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.04);
 
-      h3 {
+      h4 {
         color: #1169ee;
+        font-size: 1.2rem;
         margin-bottom: 0.5rem;
       }
 
       p {
-        font-size: 0.95rem;
-        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #333;
       }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .subhead {
+      font-size: 1.1rem;
+    }
+
+    .step-block {
+      padding: 1.5rem;
     }
   }
 }
