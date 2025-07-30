@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/claimrunner.ai/static/css/main.3109992b.css",
-    "main.js": "/claimrunner.ai/static/js/main.323de6ca.js",
+    "main.css": "/claimrunner.ai/static/css/main.e7e021d5.css",
+    "main.js": "/claimrunner.ai/static/js/main.67297f8a.js",
     "static/js/453.854633a8.chunk.js": "/claimrunner.ai/static/js/453.854633a8.chunk.js",
     "index.html": "/claimrunner.ai/index.html",
-    "main.3109992b.css.map": "/claimrunner.ai/static/css/main.3109992b.css.map",
-    "main.323de6ca.js.map": "/claimrunner.ai/static/js/main.323de6ca.js.map",
+    "main.e7e021d5.css.map": "/claimrunner.ai/static/css/main.e7e021d5.css.map",
+    "main.67297f8a.js.map": "/claimrunner.ai/static/js/main.67297f8a.js.map",
     "453.854633a8.chunk.js.map": "/claimrunner.ai/static/js/453.854633a8.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.3109992b.css",
-    "static/js/main.323de6ca.js"
+    "static/css/main.e7e021d5.css",
+    "static/js/main.67297f8a.js"
   ]
 }
