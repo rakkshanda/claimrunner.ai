@@ -1,5 +1,4 @@
 import './Home.scss';
-import { Link } from 'react-router-dom';
 import heroImage from '../media/homep.svg';
 import missionImage from '../media/mission.svg';
 function Home() {

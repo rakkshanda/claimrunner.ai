@@ -1,0 +1,84 @@
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;              
+  padding: 1.2rem 8rem;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: 60px;          
+
+  /* logo */
+  .logo {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #1169ee;
+  }
+
+  /* hamburger button (hidden on desktop) */
+  .hamburger {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+
+    @media (max-width: 768px) {
+      display: block;
+      margin-left: auto;        /* pushes it to the far right */
+    }
+  }
+
+  /* navigation links */
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+
+    a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 800;
+
+      &:hover {
+        color: #1169ee;
+      }
+    }
+
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      overflow: hidden;         
+      max-height: 0;            
+      padding: 0;
+      transition: max-height 0.3s ease;
+
+
+      &.open {
+        max-height: 420px;      
+        padding: 1rem 0;
+      }
+
+      a {
+        margin: 0.5rem 1.5rem;
+      }
+    }
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 1.5rem;
+    min-height: auto;          
+  }
+}
