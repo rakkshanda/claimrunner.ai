@@ -1,64 +1,83 @@
-import './Team.scss';
+import './Team.scss';                 // optional style file
+import { FaLinkedin, FaEnvelope } from 'react-icons/fa';
 
-const teamMembers = [
+// ⇣  all paths go UP one level from /pages
+import RakshandaImg from '../media/team/Rakshanda.jpeg';
+import SamImg        from '../media/team/Sam.jpeg';
+import ColeImg       from '../media/team/Cole.jpeg';
+import RuiqiImg      from '../media/team/Ruiqi.jpeg';
+import KhoaImg       from '../media/team/Khoa.jpeg';
+import SamridhImg    from '../media/team/Samridh.jpeg';
+import NathanImg     from '../media/team/Nathan.jpeg';
 
+const team = [
+ 
   {
-    name: 'Sam',
-    linkedin: 'https://www.linkedin.com/in/sam',
-    img: '/profile.jpg'
+    name: 'Sam Mata',
+    img: SamImg,
+    linkedin: 'https://www.linkedin.com/in/sam-mata-3048108b/',
+    email: 'sam@claimrunner.ai',
   },
    {
-    name: 'Nathan',
-    linkedin: 'https://www.linkedin.com/in/nathan',
-    img: '/profile.jpg'
+    name: 'Nathan Lee',
+    img: NathanImg,
+    linkedin: 'https://www.linkedin.com/in/nathanleeuw/',
+    email: 'nathanlee00873@gmail.com',
   },
   {
-    name: 'Ruiqi',
-    linkedin: 'https://www.linkedin.com/in/ruiqi',
-    img: '/profile.jpg'
-  },
-
-  {
-    name: 'Cole',
-    linkedin: 'https://www.linkedin.com/in/cole',
-    img: '/profile.jpg'
-  },
-    {
-    name: 'Rakshanda',
-    linkedin: 'https://www.linkedin.com/in/rakshanda',
-    img: '/profile.jpg'
-  },
-    {
-    name: 'Khoa',
-    linkedin: 'https://www.linkedin.com/in/khoa',
-    img: '/profile.jpg'
+    name: 'Ruiqi Wei',
+    img: RuiqiImg,
+    linkedin: 'https://www.linkedin.com/in/ruiqiwei/',
+    email: 'ruwei@uw.edu',
   },
   {
-    name: 'Samridh',
-    linkedin: 'https://www.linkedin.com/in/samridh',
-    img: '/profile.jpg'
+    name: 'Cole DuBois',
+    img: ColeImg,
+    linkedin: 'https://www.linkedin.com/in/coledubois/',
+    email: 'contactcole@gmail.com',
   },
- 
-  
+   {
+    name: 'Rakshanda B.',
+    img: RakshandaImg,
+    linkedin: 'https://www.linkedin.com/in/rakkshanda/',
+    email: 'rakksh@uw.edu',
+  },
+  {
+    name: 'Khoa Luong',
+    img: KhoaImg,
+    linkedin: 'https://www.linkedin.com/in/khoaluong99/',
+    email: 'khoal@uw.edu',
+  },
+  {
+    name: 'SamRidh B.',
+    img: SamridhImg,
+    linkedin: 'https://www.linkedin.com/in/samridhb/',
+    email: 'samridhb@gmail.com',
+  }
 ];
 
-function Team() {
+export default function Team() {
   return (
-    <div className="team-page">
+    <section className="team">
       <h1>Meet the Team</h1>
-      <div className="team-grid">
-        {teamMembers.map((member, i) => (
-          <div className="team-card" key={i}>
-            <img src={member.img} alt={member.name} />
-            <h3>{member.name}</h3>
-            <a href={member.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn →
-            </a>
-          </div>
+
+      <div className="grid">
+        {team.map(({ name, img, linkedin, email }) => (
+          <article key={name} className="card">
+            <img src={img} alt={name} />
+            <h3>{name}</h3>
+
+            <div className="links">
+              <a href={linkedin} target="_blank" rel="noopener noreferrer">
+                <FaLinkedin />
+              </a>
+              <a href={`mailto:${email}`}>
+                <FaEnvelope />
+              </a>
+            </div>
+          </article>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
-
-export default Team;

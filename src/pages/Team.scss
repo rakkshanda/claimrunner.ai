@@ -1,48 +1,83 @@
-.team-page {
-  padding: 4rem 2rem;
+/* Team.scss */
+
+/* ----------  Section wrapper ---------- */
+.team {
+  padding: 4rem 8%;
+  background: #f9fafc;
   text-align: center;
 
   h1 {
     font-family: 'Roboto', sans-serif;
-    color: #1169ee;
-    margin-bottom: 2rem;
+    font-size: 2.2rem;
+    margin-bottom: 3rem;
+    color: #1169ee;          // primary brand blue
   }
 
-  .team-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+  /* ----------  Responsive grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 2rem;
   }
 
-  .team-card {
-    background: #f5f9ff;
-    border-radius: 10px;
-    padding: 1.5rem;
-    width: 200px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+  /* ----------  Card ---------- */
+  .card {
+    background: #fff;
+    padding: 2rem 1.5rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 1rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 
     &:hover {
-      transform: translateY(-5px);
+      transform: translateY(-6px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     }
 
+    /* headshot */
     img {
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
       border-radius: 50%;
       margin-bottom: 1rem;
-      object-fit: cover;
     }
 
+    /* name */
     h3 {
-      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: #333;
+      font-weight: 700;
     }
 
-    a {
-      font-size: 0.9rem;
-      color: #1169ee;
-      text-decoration: none;
+    /* social / email icons */
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      font-size: 1.25rem;
+
+      a {
+        color: #666;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: #1169ee;
+        }
+      }
+    }
+  }
+
+  /* ----------  Mobile tweaks ---------- */
+  @media (max-width: 480px) {
+    .card {
+      padding: 1.5rem 1rem;
+
+      img {
+        width: 100px;
+        height: 100px;
+      }
     }
   }
 }

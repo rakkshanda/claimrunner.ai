@@ -1,22 +1,34 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+
 import Home from './pages/home';
 import Team from './pages/Team';
 import Dashboard from './Dashboard';
 import SmallClaims101 from './pages/SmallClaims101';
 import Footer from './pages/Footer';
+import ComingSoon from './pages/ComingSoon'; 
+
+import logo from './media/logo.png';
+
 import './App.scss';
 import './Navbar.scss';
+import './Modal.scss';      // <— stylesheet for the pop-up
 
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen]   = useState(false);
+  const [showModal, setShowModal] = useState(false);   // modal state
 
   return (
     <Router>
-      {/* ✅ Global Navbar */}
+      {/* ───────────── NAVBAR ───────────── */}
       <header className="navbar">
-        <div className="logo">ClaimRunner AI</div>
+        {/* logo + word-mark */}
+        <div className="logo">
+          <img src={logo} alt="ClaimRunner logo" />
+          <span>ClaimRunner&nbsp;AI</span>
+        </div>
 
+        {/* hamburger button (mobile) */}
         <button
           className="hamburger"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -25,27 +37,54 @@ function App() {
           ☰
         </button>
 
+        {/* nav links */}
         <nav className={`menu ${menuOpen ? 'open' : ''}`}>
-
-          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
-          <Link to="/team" onClick={() => setMenuOpen(false)}>Team</Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Prototype</Link>
+          <Link to="/"                 onClick={() => setMenuOpen(false)}>Home</Link>
+          <a   href="#features"        onClick={() => setMenuOpen(false)}>Features</a>
+          <Link to="/team"             onClick={() => setMenuOpen(false)}>Team</Link>
+          <Link to="/dashboard"        onClick={() => setMenuOpen(false)}>Prototype</Link>
           <Link to="/small-claims-101" onClick={() => setMenuOpen(false)}>Small Claims 101</Link>
-          <a href="#" onClick={() => setMenuOpen(false)}>Login</a>
+
+          {/* Login triggers modal */}
+          <button
+            className="login-link"
+            onClick={() => {
+              setMenuOpen(false);
+              setShowModal(true);
+            }}
+          >
+            Login
+          </button>
         </nav>
       </header>
 
-      {/* Page Content */}
+      {/* ───────────── ROUTES ───────────── */}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/team" element={<Team />} />
+        <Route path="/"                 element={<Home />} />
+        <Route path="/dashboard"        element={<Dashboard />} />
+        <Route path="/team"             element={<Team />} />
         <Route path="/small-claims-101" element={<SmallClaims101 />} />
+        <Route path="/coming-soon" element={<ComingSoon />} />  
       </Routes>
 
-      {/* Global Footer */}
       <Footer />
+
+      {/* ───────────── “COMING SOON” MODAL ───────────── */}
+      {showModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowModal(false)}          // click backdrop to close
+        >
+          <div
+            className="modal"
+            onClick={e => e.stopPropagation()}        // prevent close when clicking inside
+          >
+            <h2>Coming Soon</h2>
+            <p>Our secure login portal is launching shortly.</p>
+            <button onClick={() => setShowModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </Router>
   );
 }

@@ -1,0 +1,60 @@
+/* Full-screen dimmed backdrop */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;          // ⇧ above navbar
+}
+
+/* Centered pop-up box */
+.modal {
+  background: #fff;
+  width: min(90%, 420px);
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+
+  h2 {
+    margin-bottom: 0.75rem;
+    color: #0066FF;
+  }
+
+  p {
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+  }
+
+  button {
+    background: #0066FF;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+/* Make the “Login” button look like the other nav links */
+.login-link {
+  background: none;
+  border: none;
+  font: inherit;
+  color: #333;
+  cursor: pointer;
+  margin-left: 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+
+  &:hover {
+    color: #0066FF;
+  }
+}

@@ -13,12 +13,20 @@
   min-height: 60px;          
 
   /* logo */
-  .logo {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #1169ee;
+ .logo {
+  display: flex;          /* ▸ becomes a flex-row container  */
+  align-items: center;    /* ▸ vertically center its children */
+  gap: 0.5rem;            /* ▸ space between icon & text      */
+  color: #0066FF;         /* ▸ brand blue for the text        */
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+
+  img {
+    height: 40px;
+    width: auto;
   }
+}
 
   /* hamburger button (hidden on desktop) */
   .hamburger {

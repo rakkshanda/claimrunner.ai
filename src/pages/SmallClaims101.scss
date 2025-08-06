@@ -1,57 +1,71 @@
-.claims101 {
+/* ========== Small Claims 101 ========== */
+.claims101,           // keep old hook in case it’s used elsewhere
+.small-claims {       // new hook from the updated JSX
   padding: 4rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
 
+  /* -------- Headline -------- */
   h1 {
     text-align: center;
     font-size: 2.5rem;
     color: #1169ee;
     font-family: 'Roboto', sans-serif;
+    margin-bottom: 3rem;
   }
 
-  .subhead {
-    text-align: center;
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-
-  .intro {
-    max-width: 720px;
-    margin: 0 auto 3rem;
-    text-align: center;
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: #444;
-  }
-
-  .steps-vertical {
+  /* -------- Step List -------- */
+  .step-list {
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
-    max-width: 800px;
-    margin: 0 auto;
+    gap: 1.5rem;
+  }
 
-    .step-block {
-      background: #f8f9fb;
-      padding: 2rem;
-      border-left: 6px solid #1169ee;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.04);
+  /* -------- Card (closed) -------- */
+  .step-card {
+    border: 1px solid #1169ee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: box-shadow 0.25s ease;
+    background: #f8f9fb;
 
-      h4 {
-        color: #1169ee;
-        font-size: 1.2rem;
-        margin-bottom: 0.5rem;
-      }
-
-      p {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #333;
-      }
+    &:hover {
+      box-shadow: 0 4px 14px rgba(17, 105, 238, 0.15);
     }
   }
 
+  /* -------- Card Header -------- */
+  .step-headers {
+    color: #1169ee;
+    font-weight: 700;
+    font-size: 1.15rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* -------- Hidden Body -------- */
+  .step-body {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    padding: 0 1rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #333;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+  }
+
+  /* -------- Open (clicked) or Hover -------- */
+  .step-card.open .step-body,
+  .step-card:hover .step-body {
+    max-height: 400px;          /* big enough for any paragraph */
+    opacity: 1;
+    padding: 0 1rem 1rem;
+  }
+
+  /* -------- Responsive -------- */
   @media (max-width: 768px) {
     padding: 2rem 1rem;
 
@@ -59,12 +73,8 @@
       font-size: 2rem;
     }
 
-    .subhead {
-      font-size: 1.1rem;
-    }
-
-    .step-block {
-      padding: 1.5rem;
+    .step-header {
+      font-size: 1.05rem;
     }
   }
 }
