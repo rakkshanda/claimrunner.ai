@@ -49,7 +49,7 @@ const team = [
     email: 'khoal@uw.edu',
   },
   {
-    name: 'SamRidh B.',
+    name: 'Samridh B.',
     img: SamridhImg,
     linkedin: 'https://www.linkedin.com/in/samridhb/',
     email: 'samridhb@gmail.com',
