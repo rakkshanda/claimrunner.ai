@@ -7,6 +7,8 @@ import Dashboard from './Dashboard';
 import SmallClaims101 from './pages/SmallClaims101';
 import Footer from './pages/Footer';
 import ComingSoon from './pages/ComingSoon'; 
+import { HashLink } from 'react-router-hash-link';
+import ScrollToTop from './pages/ScrollToTop';  
 
 import logo from './media/logo.png';
 
@@ -20,6 +22,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />      
       {/* ───────────── NAVBAR ───────────── */}
       <header className="navbar">
         {/* logo + word-mark */}
@@ -40,7 +43,7 @@ function App() {
         {/* nav links */}
         <nav className={`menu ${menuOpen ? 'open' : ''}`}>
           <Link to="/"                 onClick={() => setMenuOpen(false)}>Home</Link>
-          <a   href="#features"        onClick={() => setMenuOpen(false)}>Features</a>
+<HashLink smooth to="/#features">Features</HashLink>
           <Link to="/team"             onClick={() => setMenuOpen(false)}>Team</Link>
           <Link to="/dashboard"        onClick={() => setMenuOpen(false)}>Prototype</Link>
           <Link to="/small-claims-101" onClick={() => setMenuOpen(false)}>Small Claims 101</Link>
