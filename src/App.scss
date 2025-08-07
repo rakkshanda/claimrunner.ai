@@ -13,6 +13,13 @@ html, body, #root {
   height: 100%;
   margin: 0;
 }
+.logo {
+  text-decoration: none;
+}
+
+.logo span {
+  text-decoration: none;
+}
 
 
 /* Flex column so <main> can grow and push footer down */

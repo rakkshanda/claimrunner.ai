@@ -23,13 +23,14 @@ function App() {
 
   return (
     <Router>
+      <div className="app-shell">
       <ScrollToTop />
 
       <header className="navbar">
-        <div className="logo">
+        <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
           <img src={logo} alt="ClaimRunner logo" />
           <span>ClaimRunner&nbsp;AI</span>
-        </div>
+        </Link>
 
         <button
           className="hamburger"
@@ -45,7 +46,6 @@ function App() {
           <Link to="/team" onClick={() => setMenuOpen(false)}>Team</Link>
           <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Prototype</Link>
           <Link to="/small-claims-101" onClick={() => setMenuOpen(false)}>Small Claims 101</Link>
-          <Link to="/terms-of-service" onClick={() => setMenuOpen(false)}>Terms of Service</Link>
           <button
             className="login-link"
             onClick={() => { setMenuOpen(false); setShowModal(true); }}
@@ -55,6 +55,7 @@ function App() {
         </nav>
       </header>
 
+      <main className="main-content">
       {/* Define all routes here */}
       <Routes>
         <Route path="/"                 element={<Home />} />
@@ -64,8 +65,10 @@ function App() {
         <Route path="/coming-soon"      element={<ComingSoon />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
       </Routes>
+      </main>
 
       <Footer />
+      </div> {/* .app-shell */}
 
       {/* Modal code stays the same */}
       {showModal && (
