@@ -1,4 +1,6 @@
-## 🛠️ Tech Stack
+## ClaimRunner AI
+
+<!-- ## 🛠️ Tech Stack
 
 - **React.js** – Component-based UI framework  
 - **SCSS** – Styling across components  
@@ -18,4 +20,4 @@ npm start
 To deploy
 npm run build
 npm run deploy
-It should get upated here https://rakkshanda.github.io/claimrunner.ai/
+It should get upated here https://rakkshanda.github.io/claimrunner.ai/ -->
