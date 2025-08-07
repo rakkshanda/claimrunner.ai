@@ -3,20 +3,15 @@
   background: #f8f9fb;
   border-top: 1px solid #e0e6ef;
   padding: 0rem 2rem;
-  display: flex;
-  flex-direction: column;
-  min-height: 200px;      /* sets a minimum height so it’s the same on all pages */
-  justify-content: space-between;
-  background: #f8f9fb;
-  border-top: 1px solid #e0e6ef;}
+}
 /* ──────────────────────────── Bottom row ──────────────────────────── */
 .footer-bottom {
-  flex-shrink: 0;
   border-top: 1px solid #e0e6ef;
   padding-top: 1rem;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 1rem;
   font-size: 0.9rem;
   color: #444;
 }
@@ -33,7 +28,24 @@
 
 /* ───────────────────────────── Responsive ───────────────────────────── */
 @media (max-width: 640px) {
+  .footer-top {
+    flex-direction: column;
+  }
 
+  .footer-brand {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .tagline {
+    max-width: none;
+    margin-top: 1rem;
+  }
+
+  .footer-links {
+    justify-content: center;
+  }
 
   .footer-bottom {
     flex-direction: column;

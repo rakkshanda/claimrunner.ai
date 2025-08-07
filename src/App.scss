@@ -8,7 +8,19 @@ body {
   overflow-x: hidden;
   color: #333;
 }
+/* 100 % height all the way down the tree */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
 
+
+/* Flex column so <main> can grow and push footer down */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
 .app-wrapper {
   max-width: 1100px;
   margin: 30px auto;
