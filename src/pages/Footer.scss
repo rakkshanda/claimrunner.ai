@@ -2,96 +2,21 @@
 .footer {
   background: #f8f9fb;
   border-top: 1px solid #e0e6ef;
-  padding: 2rem;
-  font-family: Arial, sans-serif;
-
-  /* split top + bottom rows */
+  padding: 0rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-}
-
-/* ──────────────────────────── Top row ──────────────────────────── */
-.footer-top {
-  display: flex;
+  min-height: 200px;      /* sets a minimum height so it’s the same on all pages */
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-/* Brand block (logo + tagline) */
-.footer-brand {
-  display: flex;
-  align-items: flex-start;
-  gap: 1.25rem;
-  flex: 1 1 300px;        /* gives room before pushing links down */
-}
-
-/* logo + word-mark stacked */
-.brand-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.brand-logo img {
-  width: 56px;            /* tweak to taste */
-  height: auto;
-}
-
-.wordmark {
-  margin-top: 0.35rem;
-  font-weight: 600;
-  color: #1169ee;         /* royal-blue brand colour */
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.95rem;
-}
-
-/* Tagline styling */
-.tagline {
-  margin: 0;
-  max-width: 420px;
-  line-height: 1.6;
-  font-size: 1rem;
-  color: #333;
-}
-
-/* ──────────────────────────── Quick links ──────────────────────────── */
-.footer-links {
-  display: flex;
-  gap: 3rem;
-}
-
-.footer-links h4 {
-  margin-bottom: 0.6rem;
-  font-size: 1.05rem;
-  color: #1169ee;
-}
-
-.footer-links ul {
-  list-style: none;
-  padding: 0;
-}
-
-.footer-links a {
-  text-decoration: none;
-  color: #333;
-  font-size: 0.95rem;
-}
-
-.footer-links a:hover {
-  color: #1169ee;
-}
-
+  background: #f8f9fb;
+  border-top: 1px solid #e0e6ef;}
 /* ──────────────────────────── Bottom row ──────────────────────────── */
 .footer-bottom {
+  flex-shrink: 0;
   border-top: 1px solid #e0e6ef;
   padding-top: 1rem;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
   font-size: 0.9rem;
   color: #444;
 }
@@ -108,24 +33,7 @@
 
 /* ───────────────────────────── Responsive ───────────────────────────── */
 @media (max-width: 640px) {
-  .footer-top {
-    flex-direction: column;
-  }
 
-  .footer-brand {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .tagline {
-    max-width: none;
-    margin-top: 1rem;
-  }
-
-  .footer-links {
-    justify-content: center;
-  }
 
   .footer-bottom {
     flex-direction: column;

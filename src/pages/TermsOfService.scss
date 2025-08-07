@@ -1,0 +1,22 @@
+/* src/pages/TermsOfService.scss */
+.tos {
+  max-width: 800px;
+  margin: 5rem auto 3rem;
+  padding: 0 1.5rem;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+
+  h1 {
+    font-family: 'Roboto', sans-serif;
+    color: #1169ee;
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  p {
+    font-size: 1.05rem;
+    color: #333;
+    text-align: justify;
+  }
+}
