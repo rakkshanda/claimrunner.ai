@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import './Home.scss';
 import heroImage from '../media/homep.svg';
-import missionImage from '../media/mission.svg';
 
 function Home() {
   const navigate = useNavigate();
@@ -80,19 +79,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ─── Mission ──────────────────────────────────── */}
-      <section className="mission">
-        <h2>Our Mission</h2>
-        <h4>Expanding Access to Justice</h4>
-        <p>
-          ClaimRunner AI’s mission is simple: to expand access to justice through information and
-          technology. We're building an AI-powered platform designed to guide anyone through the
-          small claims process, from start to finish. For those who have found the legal system
-          confusing or out of reach, we aim to make the process more understandable and more
-          accessible.
-        </p>
-        <img src={missionImage} alt="Mission illustration" />
-      </section>
     </div>
   );
 }

@@ -1,6 +1,35 @@
-/* Team.scss */
+/* ---------- Team page styles ---------- */
 
-/* ----------  Section wrapper ---------- */
+/* Mission section (imported from Home) */
+.mission {
+  padding: 4rem 2rem;
+  text-align: center;
+  background: #f0f4ff;
+
+  h2 {
+    font-family: 'Roboto', sans-serif;
+    color: #1169ee;       /* brand blue */
+    margin-bottom: 0.5rem;
+  }
+
+  h4 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  img {
+    max-width: 100px;
+  }
+}
+
+/* Team section wrapper */
 .team {
   padding: 4rem 8%;
   background: #f9fafc;
@@ -10,17 +39,17 @@
     font-family: 'Roboto', sans-serif;
     font-size: 2.2rem;
     margin-bottom: 3rem;
-    color: #1169ee;          // primary brand blue
+    color: #1169ee;
   }
 
-  /* ----------  Responsive grid ---------- */
+  /* Responsive grid for member cards */
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 2rem;
   }
 
-  /* ----------  Card ---------- */
+  /* Individual team card */
   .card {
     background: #fff;
     padding: 2rem 1.5rem;
@@ -34,7 +63,6 @@
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     }
 
-    /* headshot */
     img {
       width: 120px;
       height: 120px;
@@ -43,7 +71,6 @@
       margin-bottom: 1rem;
     }
 
-    /* name */
     h3 {
       font-size: 1.1rem;
       margin-bottom: 0.75rem;
@@ -51,7 +78,6 @@
       font-weight: 700;
     }
 
-    /* social / email icons */
     .links {
       display: flex;
       justify-content: center;
@@ -69,7 +95,7 @@
     }
   }
 
-  /* ----------  Mobile tweaks ---------- */
+  /* Mobile tweaks for card sizes */
   @media (max-width: 480px) {
     .card {
       padding: 1.5rem 1rem;

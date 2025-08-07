@@ -1,83 +1,54 @@
-import './Team.scss';                 // optional style file
+import './Team.scss';
 import { FaLinkedin, FaEnvelope } from 'react-icons/fa';
 
-// ⇣  all paths go UP one level from /pages
+import missionImage from '../media/mission.svg';
 import RakshandaImg from '../media/team/Rakshanda.jpeg';
-import SamImg        from '../media/team/Sam.jpeg';
-import ColeImg       from '../media/team/Cole.jpeg';
-import RuiqiImg      from '../media/team/Ruiqi.jpeg';
-import KhoaImg       from '../media/team/Khoa.jpeg';
-import SamridhImg    from '../media/team/Samridh.jpeg';
-import NathanImg     from '../media/team/Nathan.jpeg';
+import SamImg from '../media/team/Sam.jpeg';
+import ColeImg from '../media/team/Cole.jpeg';
+import RuiqiImg from '../media/team/Ruiqi.jpeg';
+import KhoaImg from '../media/team/Khoa.jpeg';
+import SamridhImg from '../media/team/Samridh.jpeg';
+import NathanImg from '../media/team/Nathan.jpeg';
 
 const team = [
- 
-  {
-    name: 'Sam Mata',
-    img: SamImg,
-    linkedin: 'https://www.linkedin.com/in/sam-mata-3048108b/',
-    email: 'sam@claimrunner.ai',
-  },
-   {
-    name: 'Nathan Lee',
-    img: NathanImg,
-    linkedin: 'https://www.linkedin.com/in/nathanleeuw/',
-    email: 'nathanlee00873@gmail.com',
-  },
-  {
-    name: 'Ruiqi Wei',
-    img: RuiqiImg,
-    linkedin: 'https://www.linkedin.com/in/ruiqiwei/',
-    email: 'ruwei@uw.edu',
-  },
-  {
-    name: 'Cole DuBois',
-    img: ColeImg,
-    linkedin: 'https://www.linkedin.com/in/coledubois/',
-    email: 'contactcole@gmail.com',
-  },
-   {
-    name: 'Rakshanda B.',
-    img: RakshandaImg,
-    linkedin: 'https://www.linkedin.com/in/rakkshanda/',
-    email: 'rakksh@uw.edu',
-  },
-  {
-    name: 'Khoa Luong',
-    img: KhoaImg,
-    linkedin: 'https://www.linkedin.com/in/khoaluong99/',
-    email: 'khoal@uw.edu',
-  },
-  {
-    name: 'Samridh B.',
-    img: SamridhImg,
-    linkedin: 'https://www.linkedin.com/in/samridhb/',
-    email: 'samridhb@gmail.com',
-  }
+  { name: 'Sam Mata', img: SamImg, linkedin: 'https://www.linkedin.com/in/sam-mata-3048108b/', email: 'sam@claimrunner.ai' },
+  { name: 'Nathan Lee', img: NathanImg, linkedin: 'https://www.linkedin.com/in/nathanleeuw/', email: 'nathanlee00873@gmail.com' },
+  { name: 'Ruiqi Wei', img: RuiqiImg, linkedin: 'https://www.linkedin.com/in/ruiqiwei/', email: 'ruwei@uw.edu' },
+  { name: 'Cole DuBois', img: ColeImg, linkedin: 'https://www.linkedin.com/in/coledubois/', email: 'contactcole@gmail.com' },
+  { name: 'Rakshanda B.', img: RakshandaImg, linkedin: 'https://www.linkedin.com/in/rakkshanda/', email: 'rakksh@uw.edu' },
+  { name: 'Khoa Luong', img: KhoaImg, linkedin: 'https://www.linkedin.com/in/khoaluong99/', email: 'khoal@uw.edu' },
+  { name: 'Samridh B.', img: SamridhImg, linkedin: 'https://www.linkedin.com/in/samridhb/', email: 'samridhb@gmail.com' }
 ];
 
 export default function Team() {
   return (
-    <section className="team">
-      <h1>Meet the Team</h1>
+    <>
+      {/* Mission section moved from Home.jsx */}
+      <section className="mission">
+        <h2>Our Mission</h2>
+        <h4>Expanding Access to Justice</h4>
+        <p>
+          ClaimRunner AI’s mission is simple: to expand access to justice through information and technology. We're building an AI‑powered platform designed to guide anyone through the small claims process, from start to finish. For those who have found the legal system confusing or out of reach, we aim to make the process more understandable and more accessible.
+        </p>
+        <img src={missionImage} alt="Mission illustration" />
+      </section>
 
-      <div className="grid">
-        {team.map(({ name, img, linkedin, email }) => (
-          <article key={name} className="card">
-            <img src={img} alt={name} />
-            <h3>{name}</h3>
-
-            <div className="links">
-              <a href={linkedin} target="_blank" rel="noopener noreferrer">
-                <FaLinkedin />
-              </a>
-              <a href={`mailto:${email}`}>
-                <FaEnvelope />
-              </a>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+      {/* Team section remains the same */}
+      <section className="team">
+        <h1>Meet the Team</h1>
+        <div className="grid">
+          {team.map(({ name, img, linkedin, email }) => (
+            <article key={name} className="card">
+              <img src={img} alt={name} />
+              <h3>{name}</h3>
+              <div className="links">
+                <a href={linkedin} target="_blank" rel="noopener noreferrer"><FaLinkedin /></a>
+                <a href={`mailto:${email}`}><FaEnvelope /></a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
