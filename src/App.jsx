@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+// import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+
 import { HashLink } from 'react-router-hash-link';
 import { AnimatePresence,motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
