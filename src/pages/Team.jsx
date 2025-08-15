@@ -13,6 +13,19 @@ import NathanImg from '../media/team/Nathan.jpeg';
 // ---- Your Google Apps Script endpoint ----
 const CONTACT_URL = 'https://script.google.com/macros/s/AKfycbzpp9mNLOSxhbsgP5Ie8PUAxJ9eHggIbsH5Cgbze-ZZM0FH7RlgJWpRCm4BsZdfLPCU/exec';
 
+// Google Forms direct-post config
+const FORM_ACTION =
+  'https://docs.google.com/forms/d/e/1FAIpQLSfqLsoqoSaGIfPbeMskNUSr8vJqcmV2qfpEJFc5TnWcpK7K3g/formResponse';
+
+// Map your form fields to Google Form entry IDs
+// If any column lands in the wrong place, just swap these IDs.
+const ENTRY = {
+  name:    'entry.1535527815',
+  email:   'entry.465955779',
+  message: 'entry.1193656108',
+  signup:  'entry.98446800',
+};
+
 
 const firstRow = [
   { name: 'Sam Mata', img: SamImg, linkedin: 'https://www.linkedin.com/in/sam-mata-3048108b/', email: 'sam@claimrunner.ai' },
@@ -30,62 +43,49 @@ const secondRow = [
 export default function Team() {
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'ok'|'err', msg: string }
+  const [confirming, setConfirming] = useState(false);
+  const [sentPreview, setSentPreview] = useState('');
+ const submitContact = async (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
 
-  const submitContact = async (e) => {
-    e.preventDefault();
-    const form = e.currentTarget;
+  const data = {
+    name: form.name.value.trim(),
+    email: form.email.value.trim(),
+    message: form.message.value.trim(),
+    signup: form.signup.checked, // boolean
+  };
 
-    const data = {
-      name: form.name.value.trim(),
-      email: form.email.value.trim(),
-      message: form.message.value.trim(),
-      signup: form.signup.checked, // writes "Yes"/"No" in the "Sign-up" column
-    };
+  if (!data.email || !data.message) {
+    setStatus({ type: 'err', msg: 'Please provide at least Email and Message.' });
+    return;
+  }
 
-    // minimal validation
-    if (!data.email || !data.message) {
-      setStatus({ type: 'err', msg: 'Please provide at least Email and Message.' });
-      return;
-    }
+  try {
+    setSending(true);
+    setStatus(null);
 
-    try {
-      setSending(true);
-      setStatus(null);
+    // Build payload for Google Forms (no headers → no preflight)
+    const fd = new FormData();
+    fd.set(ENTRY.name, data.name);
+    fd.set(ENTRY.email, data.email);
+    fd.set(ENTRY.message, data.message);
+    fd.set(ENTRY.signup, data.signup ? 'Yes' : 'No'); // short answer field
 
-     const payload = new URLSearchParams({
-      name: data.name,
-      email: data.email,
-      message: data.message,
-      signup: data.signup ? 'Yes' : 'No',
-    });
-
-    const res = await fetch(CONTACT_URL, {
+    await fetch(FORM_ACTION, {
       method: 'POST',
-      // ⚠️ Do NOT set headers here — let the browser set them.
-      body: payload,
+      body: fd,
+      mode: 'no-cors', // opaque response is expected
     });
 
-    // Try to read JSON; fall back to res.ok so opaque responses still pass
-    let ok = false;
-    try {
-      const txt = await res.text();
-      ok = (txt && JSON.parse(txt).ok === true) || res.ok;
-    } catch {
-      ok = res.ok || res.type === 'opaque';
-    }
-
-    if (ok) {
-      setStatus({ type: 'ok', msg: 'Thanks! Your message has been sent.' });
-      form.reset();
-    } else {
-      throw new Error('Submission failed');
-    }
-  } catch (err) {
+    setStatus({ type: 'ok', msg: 'Thanks! Your message has been sent.' });
+    form.reset();
+  } catch {
     setStatus({ type: 'err', msg: 'Could not send right now. Please try again.' });
   } finally {
     setSending(false);
   }
-  };
+};
 
   return (
     <section className="team" aria-labelledby="team-title">
@@ -148,7 +148,7 @@ export default function Team() {
             <span>Sign up for our email list for updates, promotions, and more.</span>
           </label>
 
-          <button type="submit" className="send-btn" disabled={sending}>
+          <button type="submit" className="send-btn" disabled={sending || confirming}>
             {sending ? 'SENDING…' : 'SEND'}
           </button>
 
@@ -160,6 +160,13 @@ export default function Team() {
               {status.msg}
             </div>
           )}
+          {sentPreview && (
+  <div className="sent-preview" role="status" aria-live="polite">
+    <strong>Message sent:</strong>
+    <div className="sent-text">{sentPreview}</div>
+  </div>
+)}
+
         </form>
       </div>
     </section>
