@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import './Home.scss';
-import heroImage from '../media/homep.svg';
+import heroImage from '../media/homep.png';
 import missionImage from '../media/mission.svg';
 
 function Home() {
