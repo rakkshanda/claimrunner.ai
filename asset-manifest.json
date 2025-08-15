@@ -1,11 +1,11 @@
 {
   "files": {
-    "main.css": "/claimrunner.ai/static/css/main.3136fed9.css",
-    "main.js": "/claimrunner.ai/static/js/main.f786ac3c.js",
+    "main.css": "/claimrunner.ai/static/css/main.df00e23a.css",
+    "main.js": "/claimrunner.ai/static/js/main.9b2442e2.js",
     "static/js/453.854633a8.chunk.js": "/claimrunner.ai/static/js/453.854633a8.chunk.js",
     "static/media/logo.png": "/claimrunner.ai/static/media/logo.959a071415426490e1b2.png",
+    "static/media/homep.png": "/claimrunner.ai/static/media/homep.9cdc07ccf411d4a6cc60.png",
     "static/media/Samridh.jpeg": "/claimrunner.ai/static/media/Samridh.8d7107f0fa4a06cff722.jpeg",
-    "static/media/homep.svg": "/claimrunner.ai/static/media/homep.8f511ac675469545cc6512b7d8a01b66.svg",
     "static/media/Rakshanda.jpeg": "/claimrunner.ai/static/media/Rakshanda.ae7e89e8540d37da49ec.jpeg",
     "static/media/Cole.jpeg": "/claimrunner.ai/static/media/Cole.d2fcdcc9b7c70abd109c.jpeg",
     "static/media/Sam.jpeg": "/claimrunner.ai/static/media/Sam.c1b4e62c0e5635bd4b08.jpeg",
@@ -14,12 +14,12 @@
     "static/media/Khoa.jpeg": "/claimrunner.ai/static/media/Khoa.c27cd61278ee1b41642a.jpeg",
     "static/media/mission.svg": "/claimrunner.ai/static/media/mission.526ef0357e18214ca38bcea7d3aed200.svg",
     "index.html": "/claimrunner.ai/index.html",
-    "main.3136fed9.css.map": "/claimrunner.ai/static/css/main.3136fed9.css.map",
-    "main.f786ac3c.js.map": "/claimrunner.ai/static/js/main.f786ac3c.js.map",
+    "main.df00e23a.css.map": "/claimrunner.ai/static/css/main.df00e23a.css.map",
+    "main.9b2442e2.js.map": "/claimrunner.ai/static/js/main.9b2442e2.js.map",
     "453.854633a8.chunk.js.map": "/claimrunner.ai/static/js/453.854633a8.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.3136fed9.css",
-    "static/js/main.f786ac3c.js"
+    "static/css/main.df00e23a.css",
+    "static/js/main.9b2442e2.js"
   ]
 }
