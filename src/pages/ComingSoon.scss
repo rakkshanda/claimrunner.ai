@@ -1,35 +1,75 @@
-/* src/pages/ComingSoon.scss */
 .comingsoon {
-  min-height: 72vh; /* full viewport height */
+  min-height: 72vh;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* vertical center */
-  align-items: center; /* horizontal center */
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  background: #f8f9fb;
+  background: var(--bg1);
   padding: 2rem;
 
   h1 {
-    font-size: 2.5rem;
-    color: #1169ee;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 800;
+    background: linear-gradient(100deg, #136aee, #2aa3ff 45%, #1975f1 85%);
+    background-clip: text;
+    color: transparent;
     margin-bottom: 1rem;
   }
 
   p {
-    font-size: 1.2rem;
-    color: #444;
+    font-size: 1.1rem;
+    color: var(--muted);
     margin-bottom: 2rem;
     max-width: 500px;
   }
 
-  a {
-    color: #1169ee;
-    font-weight: 600;
+  /* Match Home button styling */
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #106aed, #1b7cff);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
     text-decoration: none;
-    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(16, 106, 237, 0.3);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      background 0.25s ease;
 
     &:hover {
-      text-decoration: underline;
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(16, 106, 237, 0.4);
+    }
+
+    &:active {
+      transform: scale(0.96);
+      transition: transform 0.05s ease;
+    }
+
+    &:focus-visible {
+      outline: none;
+      border: 2px solid #0848a5;
+    }
+  }
+
+  /* Apply login-style hover animation to any image */
+  img {
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(16, 106, 237, 0.3);
+    }
+
+    &:active {
+      transform: scale(0.96);
+      transition: transform 0.05s ease;
     }
   }
 }

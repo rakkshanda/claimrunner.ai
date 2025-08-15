@@ -1,281 +1,299 @@
+/* =========================================
+   ClaimRunner — Team (glassy, pro, on-brand)
+   JSX unchanged
+   ========================================= */
+
+:root {
+  --ink: #0d1b3d;
+  --muted: #51649a;
+  --line: rgba(16, 56, 140, 0.12);
+  --accent: #106aed; /* brand blue (matches Login) */
+  --accent-2: #7cc5ff;
+  --bg0: #ffffff;
+  --bg1: #f7fbff;
+
+  --shadow-sm: 0 6px 18px rgba(21, 60, 140, 0.10);
+  --shadow-md: 0 12px 36px rgba(21, 60, 140, 0.15);
+}
+
+/* Page wrapper with soft animated blobs (same energy as Home) */
 .team {
-  padding: clamp(2rem, 3vw + 1rem, 4rem) clamp(4%, 6vw, 8%);
-  background: #f9fafc;
+  --blobA: radial-gradient(620px 280px at 10% -5%, rgba(16,106,237,0.12), transparent 60%);
+  --blobB: radial-gradient(760px 320px at 90% 0%, rgba(124,197,255,0.18), transparent 65%);
+  --blobC: radial-gradient(920px 380px at 50% 105%, rgba(191,230,255,0.28), transparent 70%);
+  background:
+    var(--blobA),
+    var(--blobB),
+    var(--blobC),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  animation: teamBgShift 18s ease-in-out infinite alternate;
+
+  padding: clamp(2.2rem, 3vw + 1rem, 4.2rem) clamp(4%, 6vw, 8%);
   text-align: center;
+  color: var(--ink);
+}
 
-  h1 {
-    font-family: 'Roboto', sans-serif;
-    font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.4rem);
-    margin-bottom: clamp(1.5rem, 1rem + 2vw, 3rem);
-    color: #1169ee;
-  }
+/* Title */
+.team h1 {
+  font-family: 'Roboto', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.9rem, 1.2rem + 1.9vw, 2.6rem);
+  margin: 0 0 clamp(1.6rem, 1rem + 2vw, 2.6rem);
+    background: linear-gradient(100deg, var(--accent), #106aee 5%, #2e98fb 85%);
+  background-clip: text;
+  color: transparent;
+}
 
-  /* Grid rows */
-  .team-row {
-    display: grid;
-    gap: clamp(1rem, 1.5vw, 2rem);
-    margin-bottom: clamp(1.5rem, 1rem + 2vw, 3rem);
-  }
+/* Rows (grids) */
+.team-row {
+  max-width: 1120px;
+  margin: 0 auto clamp(1.6rem, 1rem + 2vw, 2.6rem);
+  display: grid;
+  gap: clamp(1rem, 1.6vw, 1.6rem);
+}
 
-  /* Desktop defaults */
-  .three-cols {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-  }
-  .four-cols {
-    grid-template-columns: repeat(4, minmax(220px, 1fr));
-  }
+/* Desktop */
+.three-cols { grid-template-columns: repeat(3, minmax(240px, 1fr)); }
+.four-cols  { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
 
-  .card {
-    background: #fff;
-    padding: clamp(1rem, 1rem + 1vw, 2rem) clamp(1rem, 1rem + 0.5vw, 1.5rem);
-    border: 1px solid #e5e5e5;
-    border-radius: 1rem;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Member card — glassy + minimal */
+.card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78) 55%, rgba(255,255,255,.70)),
+    radial-gradient(160% 100% at 0% 0%, rgba(16,106,237,.06), transparent 60%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: clamp(1rem, 1rem + 1vw, 1.6rem) clamp(1rem, 1rem + 0.5vw, 1.4rem);
 
-    /* Hover only on devices that support it */
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-      }
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-    img {
-      width: clamp(96px, 10vw, 120px);
-      height: clamp(96px, 10vw, 120px);
-      object-fit: cover;
-      border-radius: 50%;
-      margin-bottom: 0.9rem;
-      flex-shrink: 0;
-    }
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
 
-    h3 {
-      font-size: clamp(1rem, 0.95rem + 0.4vw, 1.15rem);
-      margin-bottom: 0.6rem;
-      color: #333;
-      font-weight: 700;
-      line-height: 1.2;
-      word-break: break-word;
-      max-width: 18ch;
-    }
-
-    .links {
-      display: flex;
-      justify-content: center;
-      gap: 1.1rem;
-      font-size: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
-
-      a {
-        color: #666;
-        transition: color 0.2s ease;
-        &:hover,
-        &:focus-visible {
-          color: #1169ee;
-          outline: none;
-        }
-      }
-    }
-  }
-
-  /* Tablet: 2 columns */
-  @media (max-width: 1024px) {
-    .three-cols {
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
-    }
-    .four-cols {
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
-    }
-  }
-
-  /* Mobile: 1 column */
-  @media (max-width: 640px) {
-    .three-cols,
-    .four-cols {
-      grid-template-columns: 1fr;
-    }
-
-    .card {
-      min-height: auto;
-    }
-  }
-
-  /* Reduced motion respect */
-  @media (prefers-reduced-motion: reduce) {
-    .card {
-      transition: none;
-    }
-  }
-
-  /* ---------- Contact Us Card (match white team cards) ---------- */
-.contact-card {
-  /* match .card look */
-  background: #fff;
-  color: #333;
-  border: 1px solid #e5e5e5;
-  border-radius: 1rem;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-
-  /* layout */
-  margin: 3rem auto 0;
-  width: min(760px, 100%);
-  padding: 2rem 1.5rem;
-  text-align: center;
-
-  h2 {
-    font-family: 'Roboto', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
-    font-weight: 700;
-    font-size: clamp(1.15rem, 1rem + .8vw, 1.5rem);
-    color: #333; /* keep heading dark like name titles */
-    margin: 0 0 .35rem;
-  }
-
-  .divider {
-    width: 46px;
-    height: 2px;
-    background: #e9e9e9;
-    margin: .4rem auto 1rem;
-    border-radius: 2px;
-  }
-
-  .lede {
-    color: #555;
-    font-weight: 600;
-    font-size: .98rem;
-    margin-bottom: 1.1rem;
-  }
-
-  /* form layout */
-  .contact-form {
-    text-align: left;
-    width: min(640px, 100%);
-    margin: 0 auto;
-    display: grid;
-    gap: 12px;
-  }
-
-  /* inputs (light, like cards) */
-  .contact-form input[type="text"],
-  .contact-form input[type="email"],
-  .contact-form textarea {
-    width: 100%;
-    background: #fff;
-    color: #333;
-    border: 1px solid #dcdcdc;
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    font-size: 0.98rem;
-    line-height: 1.35;
-    outline: none;
-    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-
-    &::placeholder { color: #8a8a8a; }
-
-    &:hover { border-color: #c9c9c9; }
-
-    &:focus {
-      border-color: #1169ee;
-      box-shadow: 0 0 0 3px rgba(17, 105, 238, 0.18);
-      background: #fff;
-    }
-  }
-
-  .contact-form textarea {
-    resize: vertical;
-    min-height: 140px;
-  }
-
-  /* checkbox row */
-  .checkbox {
-    display: grid;
-    grid-template-columns: 20px 1fr;
-    align-items: start;
-    gap: 10px;
-    color: #555;
-    font-size: 0.95rem;
-    line-height: 1.35;
-
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      margin-top: 2px;
-      accent-color: #1169ee;
-      border-radius: 4px;
-    }
-  }
-
-  /* primary action button (theme blue on white card) */
-  .send-btn {
-    justify-self: center;
-    margin-top: .35rem;
-    background: #1169ee;
-    color: #fff;
-    border: 1px solid #1169ee;
-    border-radius: 10px;
-    padding: .8rem 1.5rem;
-    font-weight: 800;
-    letter-spacing: .14em;
-    font-size: .92rem;
-    cursor: pointer;
-    transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
-
-    @media (hover: hover) and (pointer: fine) {
-      &:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(17, 105, 238, .28); background: #0f5fd6; border-color: #0f5fd6; }
-    }
-    &:active { transform: translateY(0); }
-    &:focus-visible { outline: 3px solid rgba(17,105,238,.45); outline-offset: 3px; }
-    &[disabled] { opacity: .7; cursor: not-allowed; }
-  }
-
-  /* status text */
-  .contact-status {
-    text-align: center;
-    margin-top: .6rem;
-    font-size: .96rem;
-    &.ok  { color: #1169ee; }
-    &.err { color: #c62828; }
-  }
-
-  /* sr-only utility (if not already present elsewhere) */
-  .sr-only {
-    position: absolute !important;
-    height: 1px; width: 1px;
-    overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
-    white-space: nowrap; border: 0; padding: 0; margin: -1px;
+/* Hover polish on fine pointers only */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(16,106,237,.18);
   }
 }
+
+/* Headshots */
+.card img {
+  width: clamp(96px, 10vw, 122px);
+  height: clamp(96px, 10vw, 122px);
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+}
+
+/* Names */
+.card h3 {
+  font-size: clamp(1.02rem, 0.95rem + 0.45vw, 1.18rem);
+  margin: 0 0 0.55rem;
+  color: var(--ink);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  word-break: break-word;
+  max-width: 18ch;
+}
+
+/* Links row */
+.card .links {
+  display: flex;
+  justify-content: center;
+  gap: 1.1rem;
+  font-size: clamp(1.08rem, 1rem + 0.4vw, 1.25rem);
+}
+
+.card .links a {
+  color: #667085;
+  transition: color .2s ease, transform .2s ease;
+}
+
+.card .links a:hover,
+.card .links a:focus-visible {
+  color: var(--accent);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+/* ===== Contact Us card (matches member cards, but wider) ===== */
+
+.contact-card h2 {
+  font-family: 'Roboto', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.15rem, 1rem + .8vw, 1.5rem);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin: 0 0 .35rem;
+}
+
+.contact-card .divider {
+  width: 46px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  margin: .5rem auto 1rem;
+  border-radius: 2px;
+}
+
+.contact-card .lede {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: .98rem;
+  margin-bottom: 1.1rem;
+}
+
+/* Form */
+.contact-form {
+  text-align: left;
+  width: min(640px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+/* Inputs */
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea {
+  width: 100%;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #dfe6f3;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+
+  &::placeholder { color: #9aa6bf; }
+  &:hover { border-color: #cdd8ec; }
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16,106,237, .18);
+    background: #fff;
+  }
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+/* Checkbox row */
+.checkbox {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+  gap: 10px;
+  color: #51649a;
+  font-size: 0.95rem;
+  line-height: 1.35;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent);
+    border-radius: 4px;
+  }
+}
+
+/* Primary action (match Login) */
+.send-btn {
+  justify-self: center;
+  margin-top: .35rem;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: .8rem 1.6rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  font-size: .92rem;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(16,106,237,.22);
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(16,106,237,.28);
+      background: #1b7cff;
+      border-color: #1b7cff;
+    }
+  }
+  &:active { transform: translateY(0); }
+  &:focus-visible { outline: 3px solid rgba(16,106,237,.45); outline-offset: 3px; }
+  &[disabled] { opacity: .7; cursor: not-allowed; }
+}
+
+/* Status + sent preview */
+.contact-status {
+  text-align: center;
+  margin-top: .6rem;
+  font-size: .96rem;
+  &.ok  { color: var(--accent); }
+  &.err { color: #c62828; }
+}
+
 .sent-preview {
   margin-top: .6rem;
   padding: .75rem .9rem;
   background: #f5f9ff;
   border: 1px solid #d6e6ff;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #124ea3;
   font-size: .95rem;
 
   .sent-text {
     margin-top: .3rem;
-    white-space: pre-wrap; /* preserve line breaks */
+    white-space: pre-wrap;
     word-break: break-word;
   }
 }
 
-/* responsive polish */
+/* SR-only utility (if not defined globally) */
+.sr-only {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .three-cols { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+  .four-cols  { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
 @media (max-width: 640px) {
-  .contact-card {
-    padding: 1.25rem 1rem 1.4rem;
-    .contact-form { gap: 10px; }
-    .send-btn { width: 140px; }
-  }
+  .three-cols,
+  .four-cols { grid-template-columns: 1fr; }
+
+  .card { min-height: auto; }
+  .contact-card { padding: 1.25rem 1rem 1.4rem; }
+  .contact-form { gap: 10px; }
+  .send-btn { width: 160px; }
 }
 
-/* reduced motion */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .contact-card .send-btn { transition: none; }
-  .contact-card input, .contact-card textarea { transition: none; }
+  .team { animation: none !important; }
+  .card,
+  .send-btn { transition: none; }
 }
 
+/* Keyframes */
+@keyframes teamBgShift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  100% { background-position: 40% 20%, 60% 10%, 50% 90%, 0 0; }
 }

@@ -35,7 +35,7 @@ const firstRow = [
 
 const secondRow = [
   { name: 'Cole DuBois', img: ColeImg, linkedin: 'https://www.linkedin.com/in/coledubois/', email: 'contactcole@gmail.com' },
-  { name: 'Rakshanda B.', img: RakshandaImg, linkedin: 'https://www.linkedin.com/in/rakkshanda/', email: 'rakksh@uw.edu' },
+  { name: 'Rakshanda', img: RakshandaImg, linkedin: 'https://www.linkedin.com/in/rakkshanda/', email: 'rakkshanda.b@gmail.com' },
   { name: 'Khoa Luong', img: KhoaImg, linkedin: 'https://www.linkedin.com/in/khoaluong99/', email: 'khoal@uw.edu' },
   { name: 'Samridh B.', img: SamridhImg, linkedin: 'https://www.linkedin.com/in/samridhb/', email: 'samridhb@gmail.com' }
 ];

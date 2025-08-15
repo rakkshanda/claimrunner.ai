@@ -1,60 +1,93 @@
-/* Full-screen dimmed backdrop */
+/* backdrop */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 100;          // ⇧ above navbar
+  justify-content: center;
+  z-index: 999;
 }
 
-/* Centered pop-up box */
+/* modal */
 .modal {
-  background: #fff;
-  width: min(90%, 420px);
-  border-radius: 12px;
-  padding: 2rem 2.5rem;
+  background: rgba(255,255,255,.98);
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 12px 32px rgba(0,0,0,.2);
+  position: relative;
   text-align: center;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-
-  h2 {
-    margin-bottom: 0.75rem;
-    color: #0066FF;
-  }
-
-  p {
-    margin-bottom: 1.5rem;
-    line-height: 1.4;
-  }
-
-  button {
-    background: #0066FF;
-    color: #fff;
-    border: none;
-    padding: 0.6rem 1.4rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
+  animation: modalPop .25s ease-out;
 }
 
-/* Make the “Login” button look like the other nav links */
-.login-link {
-  background: none;
-  border: none;
-  font: inherit;
-  color: #333;
-  cursor: pointer;
-  margin-left: 1.5rem;
+/* ✕ CLOSE = same vibe as Login (#106aed), just compact */
+/* Bottom Close button inside modal */
+.modal-close-btn {
+  background-color: #106aed;
+  color: #fff;
+  font-weight: 600;
   font-size: 0.95rem;
-  font-weight: 800;
+  border: 1px solid transparent;
+  border-radius: 999px; /* pill shape */
+  padding: 0.6rem 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 106, 237, 0.3);
+  transition:
+    transform 0.15s ease,
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
 
-  &:hover {
-    color: #0066FF;
-  }
+  display: inline-block;
+  margin-top: 1.2rem;
+}
+
+/* Hover = expand */
+.modal-close-btn:hover {
+  transform: scale(1.05);
+  background-color: #1b7cff;
+  box-shadow: 0 6px 16px rgba(16, 106, 237, 0.4);
+}
+
+/* Click = shrink */
+.modal-close-btn:active {
+  transform: scale(0.96);
+}
+
+/* Focus ring */
+.modal-close-btn:focus-visible {
+  outline: none;
+  border-color: #0848a5;
+}
+
+/* hover = expand like login */
+.close-btn:hover {
+  transform: scale(1.05);
+  background-color: #1b7cff;
+  box-shadow: 0 6px 16px rgba(16,106,237,.40);
+}
+
+/* click = quick compress */
+.close-btn:active {
+  transform: scale(.96);
+  transition: transform .05s ease;
+}
+
+/* focus = visible border (matches login focus) */
+.close-btn:focus-visible {
+  outline: none;
+  border-color: #0848a5;
+}
+
+/* titles/text */
+.modal h2 { margin: 0 0 .5rem; font-size: 1.4rem; font-weight: 700; color: #0d1b3d; }
+.modal p  { margin: 1rem 0 0; color: #444; font-size: .95rem; }
+
+/* pop animation */
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(-10px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }

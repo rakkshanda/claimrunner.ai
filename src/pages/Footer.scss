@@ -1,59 +1,108 @@
-/* ───────────────────────────── Root wrapper ───────────────────────────── */
-.footer {
-  background: #f8f9fb;
-  border-top: 1px solid #e0e6ef;
-  padding: 0rem 2rem;
-}
-/* ──────────────────────────── Bottom row ──────────────────────────── */
-.footer-bottom {
-  border-top: 1px solid #e0e6ef;
-  padding-top: 1rem;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #444;
+/* ================================
+   ClaimRunner — Footer (pro clean)
+   ================================ */
+
+:root {
+  --ink: #0d1b3d;
+  --muted: #586b97;
+  --line: #e3e9f4;
+  --accent: #1169ee;
 }
 
+/* wrapper */
+.footer {
+  background: linear-gradient(180deg, #f9fbff, #f3f7ff);
+  border-top: 1px solid var(--line);
+}
+
+/* single row you already render */
+.footer-bottom {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* copyright text */
+.footer-bottom p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* links group */
+.footer-policy {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* links */
 .footer-policy a {
-  margin-left: 1.25rem;
+  position: relative;
   text-decoration: none;
-  color: #444;
+  color: var(--ink);
+  font-weight: 600;
+  padding: 0.2rem 0;
+  transition: color 0.2s ease;
+}
+
+/* sleek underline on hover */
+.footer-policy a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), #7cc5ff);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
+  border-radius: 2px;
 }
 
 .footer-policy a:hover {
-  color: #1169ee;
+  color: var(--accent);
+}
+.footer-policy a:hover::after {
+  transform: scaleX(1);
 }
 
-/* ───────────────────────────── Responsive ───────────────────────────── */
+/* focus ring for a11y */
+.footer-policy a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(17, 105, 238, 0.25);
+  border-radius: 4px;
+}
+
+/* subtle top divider polish on very light backgrounds */
+.footer::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+}
+
+/* responsive */
 @media (max-width: 640px) {
-  .footer-top {
-    flex-direction: column;
-  }
-
-  .footer-brand {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .tagline {
-    max-width: none;
-    margin-top: 1rem;
-  }
-
-  .footer-links {
-    justify-content: center;
-  }
-
   .footer-bottom {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    gap: 0.6rem;
   }
 
-  .footer-policy a {
-    margin: 0 0.5rem;
+  .footer-policy {
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 }
