@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/claimrunner.ai/static/css/main.f4ea3680.css",
-    "main.js": "/claimrunner.ai/static/js/main.a4356d70.js",
+    "main.css": "/claimrunner.ai/static/css/main.a9219c01.css",
+    "main.js": "/claimrunner.ai/static/js/main.06c0e1f3.js",
     "static/js/453.854633a8.chunk.js": "/claimrunner.ai/static/js/453.854633a8.chunk.js",
     "static/media/logo.png": "/claimrunner.ai/static/media/logo.959a071415426490e1b2.png",
     "static/media/homep.png": "/claimrunner.ai/static/media/homep.9cdc07ccf411d4a6cc60.png",
@@ -14,12 +14,12 @@
     "static/media/Khoa.jpeg": "/claimrunner.ai/static/media/Khoa.c27cd61278ee1b41642a.jpeg",
     "static/media/mission.svg": "/claimrunner.ai/static/media/mission.526ef0357e18214ca38bcea7d3aed200.svg",
     "index.html": "/claimrunner.ai/index.html",
-    "main.f4ea3680.css.map": "/claimrunner.ai/static/css/main.f4ea3680.css.map",
-    "main.a4356d70.js.map": "/claimrunner.ai/static/js/main.a4356d70.js.map",
+    "main.a9219c01.css.map": "/claimrunner.ai/static/css/main.a9219c01.css.map",
+    "main.06c0e1f3.js.map": "/claimrunner.ai/static/js/main.06c0e1f3.js.map",
     "453.854633a8.chunk.js.map": "/claimrunner.ai/static/js/453.854633a8.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f4ea3680.css",
-    "static/js/main.a4356d70.js"
+    "static/css/main.a9219c01.css",
+    "static/js/main.06c0e1f3.js"
   ]
 }
