@@ -23,15 +23,6 @@ const team = [
 export default function Team() {
   return (
     <>
-      {/* Mission section moved from Home.jsx */}
-      <section className="mission">
-        <h2>Our Mission</h2>
-        <h4>Expanding Access to Justice</h4>
-        <p>
-          ClaimRunner AI’s mission is simple: to expand access to justice through information and technology. We're building an AI‑powered platform designed to guide anyone through the small claims process, from start to finish. For those who have found the legal system confusing or out of reach, we aim to make the process more understandable and more accessible.
-        </p>
-        <img src={missionImage} alt="Mission illustration" />
-      </section>
 
       {/* Team section remains the same */}
       <section className="team">

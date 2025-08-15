@@ -9,7 +9,7 @@ function Footer() {
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} ClaimRunner&nbsp;AI. All rights reserved.</p>
         <div className="footer-policy">
-          <a href="#">Privacy Policy</a>
+          {/* <a href="#">Privacy Policy</a> */}
         <a href="/terms-of-service">Terms of Service</a>
         </div>
       </div>
