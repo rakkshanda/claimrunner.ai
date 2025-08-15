@@ -1,11 +1,13 @@
 /* src/pages/ComingSoon.scss */
 .comingsoon {
-  min-height: 60vh;
+  min-height: 72vh; /* full viewport height */
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; /* vertical center */
+  align-items: center; /* horizontal center */
   text-align: center;
+  background: #f8f9fb;
+  padding: 2rem;
 
   h1 {
     font-size: 2.5rem;
@@ -14,14 +16,17 @@
   }
 
   p {
+    font-size: 1.2rem;
+    color: #444;
     margin-bottom: 2rem;
-    font-size: 1.1rem;
+    max-width: 500px;
   }
 
   a {
     color: #1169ee;
     font-weight: 600;
     text-decoration: none;
+    font-size: 1.1rem;
 
     &:hover {
       text-decoration: underline;

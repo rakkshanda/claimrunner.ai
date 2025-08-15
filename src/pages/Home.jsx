@@ -41,7 +41,7 @@ function Home() {
 
   return (
     <div className="home">
-      {/* ─── Landing Zone ─────────────────────────────── */}
+      {/* Landing Zone */}
       <section className="landing">
         <div className="landing-content">
           <h1>
@@ -55,8 +55,8 @@ function Home() {
           <img src={heroImage} alt="Justice illustration" />
         </div>
       </section>
-   
-      {/* ─── Features ─────────────────────────────────── */}
+
+      {/* Features */}
       <section className="features" id="features">
         <h2>Your Claim. Made Simple.</h2>
         <p className="subhead">
@@ -70,8 +70,17 @@ function Home() {
               className="feature-card"
               role="button"
               tabIndex={0}
-              onClick={() => navigate('/coming-soon')}
-              onKeyDown={(e) => e.key === 'Enter' && navigate('/coming-soon')}
+              onClick={() =>
+                title === 'Eligibility Checker'
+                  ? navigate('/dashboard')
+                  : navigate('/coming-soon')
+              }
+              onKeyDown={(e) =>
+                e.key === 'Enter' &&
+                (title === 'Eligibility Checker'
+                  ? navigate('/dashboard')
+                  : navigate('/coming-soon'))
+              }
             >
               <h3>{title}</h3>
               <p>{desc}</p>
@@ -79,15 +88,20 @@ function Home() {
           ))}
         </div>
       </section>
- <section className="mission">
+
+      {/* Mission */}
+      <section className="mission">
         <h2>Our Mission</h2>
         <h4>Expanding Access to Justice</h4>
         <p>
-          ClaimRunner AI’s mission is simple: to expand access to justice through information and technology. We're building an AI‑powered platform designed to guide anyone through the small claims process, from start to finish. For those who have found the legal system confusing or out of reach, we aim to make the process more understandable and more accessible.
+          ClaimRunner AI’s mission is simple: to expand access to justice through information and
+          technology. We're building an AI-powered platform designed to guide anyone through the
+          small claims process, from start to finish. For those who have found the legal system
+          confusing or out of reach, we aim to make the process more understandable and more
+          accessible.
         </p>
         <img src={missionImage} alt="Mission illustration" />
       </section>
-
     </div>
   );
 }
