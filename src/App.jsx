@@ -64,6 +64,8 @@ function App() {
         <Route path="/small-claims-101" element={<SmallClaims101 />} />
         <Route path="/coming-soon"      element={<ComingSoon />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="*" element={<Navigate to="/" />} />
+
       </Routes>
       </main>
 
