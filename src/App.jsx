@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
 
 import Home from './pages/home';
@@ -64,7 +64,7 @@ function App() {
         <Route path="/small-claims-101" element={<SmallClaims101 />} />
         <Route path="/coming-soon"      element={<ComingSoon />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
       </main>
