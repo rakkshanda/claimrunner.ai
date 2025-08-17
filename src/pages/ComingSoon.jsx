@@ -12,7 +12,8 @@ export default function ComingSoon() {
       transition={{ duration: 0.35 }}
     >
       <h1>Coming Soon</h1>
-      <p>We’re polishing this feature right now. Check back shortly!</p>
+      <p>To sign up for news and announcements join our mailing list.
+Have questions? Contact us at contact@claimrunner.ai</p>
       <Link to="/" className="btn-primary">Back to Home</Link>
     </motion.section>
   );
