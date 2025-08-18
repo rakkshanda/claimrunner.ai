@@ -8,34 +8,34 @@ function Home() {
 
   const features = [
     {
-      title: 'Claim Agent',
+      title: 'E-file',
       desc:
-        'Your personal guide. Answer a few questions and let our Claim Builder Agent help complete your small claims paperwork.',
+        'Submit your claim through our platform when courts allow.',
     },
+  
     {
       title: 'Eligibility Checker',
       desc:
-        'Know before you file. We will check your case’s amount, jurisdiction, and deadlines to confirm your eligibility to file.',
+        'See if your case meets the requirements to file. Try it for free in King County, WA!',
+    },  {
+      title: 'Trial Prep & Simulator',
+      desc:
+        'Practice answering questions and presenting evidence for your hearing.',
     },
     {
-      title: 'Talk to Claim',
+      title: 'Judy, Our Claim Agent',
       desc:
-        'Prefer to explain things out loud? Talk to our AI, and it will translate your words into usable claim info.',
+        'Answer a few questions and let Judy help you build a winning case.',
+    },
+    {
+      title: 'Talk-to-Claim',
+      desc:
+        'Tell our AI your story, and it will turn your words into usable claim details.',
     },
     {
       title: 'Legal Form Generator',
       desc:
-        'Tired of paperwork? We will automatically fill out your forms based on your answers.',
-    },
-    {
-      title: 'E-file',
-      desc:
-        'When courts allow, skip the trip and submit your claims directly through our platform.',
-    },
-    {
-      title: 'Trial Prep & Simulator',
-      desc:
-        'Nervous to go in front of a judge? Our trial simulator will help you rehearse your case and be prepared for trial.',
+        'Share your answers and we’ll prepare your legal forms, ready for download or filing.',
     },
   ];
 
