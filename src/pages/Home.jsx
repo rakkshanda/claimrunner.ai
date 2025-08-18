@@ -76,7 +76,7 @@ function Home() {
           </p>
         </header>
 
-        <ul className="feature-grid" role="list">
+        <ul className="feature-grid" >
           {features.map(({ title, desc }, i) => (
             <li key={title} className="feature-item">
               <button
