@@ -1,13 +1,13 @@
-// Prototype modal — step 1: login/signup against the backend auth endpoints.
-// Opens from the "Prototype" item in the navbar (App.jsx).
+// Prototype page — renders below the navbar at /prototype, so the nav stays
+// interactive. Login/signup → case list → case detail (with step progress bar).
 
 import { useEffect, useState } from 'react';
 import { getMe, getToken, login, logout, signup } from '../api/client';
-import CaseList from './CaseList';
-import CaseDetail from './CaseDetail';
-import './PrototypeModal.scss';
+import CaseList from '../components/CaseList';
+import CaseDetail from '../components/CaseDetail';
+import './Prototype.scss';
 
-export default function PrototypeModal({ onClose }) {
+export default function Prototype() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [openCaseId, setOpenCaseId] = useState(null); // null = case list
   const [name, setName] = useState('');
@@ -27,7 +27,7 @@ export default function PrototypeModal({ onClose }) {
         if (!cancelled) setProfile(me);
       } catch (err) {
         // Expired/invalid token — stay on the login form.
-        console.error('[PrototypeModal] Session restore failed:', err);
+        console.error('[Prototype] Session restore failed:', err);
       }
     })();
     return () => { cancelled = true; };
@@ -63,7 +63,7 @@ export default function PrototypeModal({ onClose }) {
       }
       setPassword('');
     } catch (err) {
-      console.error(`[PrototypeModal] ${mode} failed:`, err);
+      console.error(`[Prototype] ${mode} failed:`, err);
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setBusy(false);
@@ -75,7 +75,7 @@ export default function PrototypeModal({ onClose }) {
     try {
       await logout();
     } catch (err) {
-      console.error('[PrototypeModal] Logout failed:', err);
+      console.error('[Prototype] Logout failed:', err);
     } finally {
       setProfile(null);
       setOpenCaseId(null);
@@ -84,23 +84,19 @@ export default function PrototypeModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className={`modal prototype-modal ${profile ? 'prototype-modal--wide' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="prototype-page">
+      <div className={`prototype-panel ${profile ? 'prototype-panel--wide' : ''}`}>
         {profile ? (
           <>
             <div className="proto-header">
               <div>
-                <h2>ClaimRunner</h2>
+                <h2>ClaimRunner Prototype</h2>
                 <p className="proto-user">Logged in as {profile.name}</p>
               </div>
               <div className="proto-header-actions">
                 <button className="proto-btn secondary small" onClick={handleLogout} disabled={busy}>
                   {busy ? '…' : 'Log out'}
                 </button>
-                <button className="proto-btn small" onClick={onClose}>Close</button>
               </div>
             </div>
 
@@ -111,7 +107,7 @@ export default function PrototypeModal({ onClose }) {
             )}
           </>
         ) : (
-          <>
+          <div className="proto-auth">
             <h2>{mode === 'login' ? 'Log in' : 'Create your account'}</h2>
             <p className="proto-subtitle">
               {mode === 'login'
@@ -180,7 +176,7 @@ export default function PrototypeModal({ onClose }) {
                   : (mode === 'login' ? 'Log in' : 'Sign up')}
               </button>
             </form>
-          </>
+          </div>
         )}
       </div>
     </div>

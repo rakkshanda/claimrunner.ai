@@ -56,6 +56,29 @@ export async function getPlaintiffByAuthUserId(authUserId: string): Promise<Plai
   }
 }
 
+export async function updatePlaintiff(
+  plaintiffId: string,
+  patch: Partial<Omit<PlaintiffRow, 'id' | 'auth_user_id' | 'created_at'>>
+): Promise<PlaintiffRow> {
+  try {
+    const rows = await supabaseRest<PlaintiffRow[]>({
+      method: 'PATCH',
+      table: 'plaintiffs',
+      query: { id: `eq.${plaintiffId}` },
+      body: patch,
+      returnRepresentation: true,
+    });
+    const row = rows?.[0];
+    if (!row) {
+      throw new NotFoundError(`Plaintiff not found: ${plaintiffId}`);
+    }
+    return row;
+  } catch (err) {
+    console.error(`[queries] updatePlaintiff(${plaintiffId}) failed:`, err);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Defendants
 // ---------------------------------------------------------------------------

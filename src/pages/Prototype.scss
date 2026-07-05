@@ -1,17 +1,42 @@
-/* Prototype login/signup modal — extends the base .modal styles in Modal.scss */
+/* Prototype page — sits below the navbar in normal page flow (no overlay). */
 
-.prototype-modal {
+.prototype-page {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1rem 3rem;
+  min-height: 60vh;
+}
+
+.prototype-panel {
+  background: #fff;
+  border: 1px solid #e4eaf4;
+  border-radius: 14px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 8px 24px rgba(13, 27, 61, 0.08);
   text-align: left;
+  height: fit-content;
+  transition: max-width 0.3s ease;
 
-  h2 { text-align: center; }
+  &.prototype-panel--wide {
+    max-width: 680px;
+  }
 
-  /* Wider layout once logged in (case list / case detail) */
-  &.prototype-modal--wide {
-    max-width: 640px;
-    max-height: 85vh;
-    overflow-y: auto;
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0d1b3d;
+  }
 
-    h2 { text-align: left; margin: 0; font-size: 1.25rem; }
+  .proto-auth h2 { text-align: center; }
+
+  .proto-subtitle {
+    text-align: center;
+    margin: 0.4rem 0 1.2rem;
+    color: #555;
+    font-size: 0.93rem;
   }
 
   .proto-header {
@@ -22,6 +47,8 @@
     margin-bottom: 1.2rem;
     padding-bottom: 0.9rem;
     border-bottom: 1px solid #e4eaf4;
+
+    h2 { margin: 0; font-size: 1.25rem; }
   }
 
   .proto-user {
@@ -34,13 +61,6 @@
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
-  }
-
-  .proto-subtitle {
-    text-align: center;
-    margin: 0.4rem 0 1.2rem;
-    color: #555;
-    font-size: 0.93rem;
   }
 
   /* Login / Signup tab switcher */
@@ -85,11 +105,13 @@
       color: #0d1b3d;
     }
 
-    input {
+    input, select, textarea {
       border: 1px solid #cdd6e4;
       border-radius: 8px;
       padding: 0.6rem 0.75rem;
       font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
       &:focus {
@@ -97,6 +119,14 @@
         border-color: #106aed;
         box-shadow: 0 0 0 3px rgba(16, 106, 237, 0.15);
       }
+    }
+
+    textarea { resize: vertical; }
+
+    input:disabled {
+      background: #eef2f9;
+      color: #6b7a99;
+      cursor: not-allowed;
     }
   }
 
@@ -120,24 +150,43 @@
     margin: 0.6rem 0;
   }
 
-  /* Shared form extras */
-  .proto-form {
-    select, textarea {
-      border: 1px solid #cdd6e4;
-      border-radius: 8px;
-      padding: 0.6rem 0.75rem;
-      font-size: 0.95rem;
-      font-family: inherit;
-      background: #fff;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* Buttons — same pill vibe as the site's login button */
+  .proto-btn {
+    background-color: #106aed;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.65rem 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 106, 237, 0.3);
+    transition: transform 0.15s ease, background-color 0.25s ease, box-shadow 0.25s ease;
 
-      &:focus {
-        outline: none;
-        border-color: #106aed;
-        box-shadow: 0 0 0 3px rgba(16, 106, 237, 0.15);
+    &:hover:not(:disabled) {
+      transform: scale(1.03);
+      background-color: #1b7cff;
+      box-shadow: 0 6px 16px rgba(16, 106, 237, 0.4);
+    }
+    &:active:not(:disabled) { transform: scale(0.97); }
+    &:disabled { opacity: 0.6; cursor: default; }
+
+    &.secondary {
+      background: #fff;
+      color: #106aed;
+      border-color: #106aed;
+      box-shadow: none;
+
+      &:hover:not(:disabled) {
+        background: #f0f6ff;
+        box-shadow: none;
       }
     }
-    textarea { resize: vertical; }
+
+    &.small {
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+    }
   }
 
   .form-row {
@@ -160,9 +209,66 @@
     color: #8a97b3;
   }
 
-  .proto-btn.small {
-    padding: 0.45rem 1rem;
+  /* Checkbox + radio groups */
+  .checkbox-fieldset {
+    border: 1px solid #dbe4f2;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem 0.9rem;
+    margin: 0;
+
+    legend {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0d1b3d;
+      padding: 0 0.3rem;
+    }
+  }
+
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.4rem 0.8rem;
+  }
+
+  .checkbox-label,
+  .radio-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0.45rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #33415e !important;
+    cursor: pointer;
+
+    input[type='checkbox'],
+    input[type='radio'] {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: #106aed;
+      cursor: pointer;
+    }
+  }
+
+  .radio-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+  }
+
+  .radio-group-label {
+    flex-basis: 100%;
     font-size: 0.85rem;
+    font-weight: 600;
+    color: #0d1b3d;
+  }
+
+  .case-detail-actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
   }
 
   /* ---- Case list ---- */
@@ -302,68 +408,5 @@
     color: #4a5878;
 
     strong { color: #0d1b3d; }
-  }
-
-  /* Buttons — same pill vibe as .modal-close-btn */
-  .proto-btn {
-    background-color: #106aed;
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    padding: 0.65rem 1.4rem;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(16, 106, 237, 0.3);
-    transition: transform 0.15s ease, background-color 0.25s ease, box-shadow 0.25s ease;
-
-    &:hover:not(:disabled) {
-      transform: scale(1.03);
-      background-color: #1b7cff;
-      box-shadow: 0 6px 16px rgba(16, 106, 237, 0.4);
-    }
-    &:active:not(:disabled) { transform: scale(0.97); }
-    &:disabled { opacity: 0.6; cursor: default; }
-
-    &.secondary {
-      background: #fff;
-      color: #106aed;
-      border-color: #106aed;
-      box-shadow: none;
-
-      &:hover:not(:disabled) {
-        background: #f0f6ff;
-        box-shadow: none;
-      }
-    }
-  }
-
-  /* Logged-in profile card */
-  .proto-profile {
-    background: #f5f8fd;
-    border: 1px solid #dbe4f2;
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    margin: 1rem 0 1.2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    font-size: 0.92rem;
-    color: #0d1b3d;
-
-    span {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #6b7a99;
-    }
-  }
-
-  .proto-actions {
-    display: flex;
-    justify-content: center;
-    gap: 0.7rem;
   }
 }

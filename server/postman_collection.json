@@ -92,6 +92,22 @@
       "name": "Plaintiffs",
       "item": [
         {
+          "name": "Update My Profile 🔒",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/plaintiffs/me",
+            "description": "All fields optional. Updates the logged-in plaintiff's own row — the PDF pulls plaintiff contact info from here.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"123 Main St\",\n  \"city\": \"Seattle\",\n  \"state\": \"WA\",\n  \"zip\": \"98104\",\n  \"phone\": \"206-555-0101\"\n}"
+            }
+          }
+        },
+        {
           "name": "Create Plaintiff (no auth)",
           "request": {
             "method": "POST",

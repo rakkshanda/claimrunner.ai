@@ -17,6 +17,7 @@ import {
   listCasesByPlaintiff,
   updateCase,
   updateDefendant,
+  updatePlaintiff,
 } from './db/queries.js';
 import {
   CLAIM_REASONS,
@@ -205,6 +206,48 @@ app.post(
       res.status(201).json(plaintiff);
     } catch (err) {
       console.error('[POST /api/plaintiffs] Error:', err);
+      res.status(errorStatus(err)).json({ error: errorMessage(err) });
+    }
+  })
+);
+
+// PATCH /api/plaintiffs/me — update the logged-in plaintiff's own profile 🔒
+// The PDF pulls plaintiff contact info from this row.
+app.patch(
+  '/api/plaintiffs/me',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    try {
+      const { name, dob, address, city, state, zip, phone, email } = (req.body ?? {}) as Record<
+        string,
+        string | undefined
+      >;
+      if (name !== undefined && !name.trim()) {
+        console.error('[PATCH /api/plaintiffs/me] name must be non-empty when provided');
+        res.status(400).json({ error: 'name must be non-empty when provided' });
+        return;
+      }
+
+      const patch: Record<string, string> = {};
+      if (name !== undefined) patch.name = name.trim();
+      if (dob !== undefined) patch.dob = dob;
+      if (address !== undefined) patch.address = address;
+      if (city !== undefined) patch.city = city;
+      if (state !== undefined) patch.state = state;
+      if (zip !== undefined) patch.zip = zip;
+      if (phone !== undefined) patch.phone = phone;
+      if (email !== undefined) patch.email = email;
+
+      if (Object.keys(patch).length === 0) {
+        console.error('[PATCH /api/plaintiffs/me] Empty patch');
+        res.status(400).json({ error: 'No updatable fields provided' });
+        return;
+      }
+
+      const updated = await updatePlaintiff(req.plaintiff!.id, patch);
+      res.status(200).json(updated);
+    } catch (err) {
+      console.error('[PATCH /api/plaintiffs/me] Error:', err);
       res.status(errorStatus(err)).json({ error: errorMessage(err) });
     }
   })

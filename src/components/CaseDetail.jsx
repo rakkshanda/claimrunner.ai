@@ -1,7 +1,18 @@
-// Case detail view — step progress bar + editable case & defendant info.
+// Case detail view — step progress bar + every field the Notice of Small Claim
+// PDF needs: court info, claim details, plaintiff/defendant info, interpreters,
+// Servicemembers Civil Relief Act, and signature. Save persists everything;
+// Download PDF saves first, then downloads the filled form.
 
 import { useEffect, useState } from 'react';
-import { CLAIM_REASONS, getCase, getCaseSteps, updateCase } from '../api/client';
+import {
+  CLAIM_REASONS,
+  DIVISIONS,
+  downloadCasePdf,
+  getCase,
+  getCaseSteps,
+  updateCase,
+  updateMyProfile,
+} from '../api/client';
 
 const prettyReason = (r) => r.replace(/_/g, ' ');
 
@@ -40,22 +51,33 @@ export default function CaseDetail({ caseId, onBack }) {
   const [steps, setSteps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
-  // Case form state
+  // Court + case basics + claim details
   const [form, setForm] = useState({
-    case_name: '',
-    case_number: '',
-    incident_date: '',
-    claim_amount: '',
-    claim_reason: CLAIM_REASONS[0],
-    explanation: '',
+    case_name: '', case_number: '', incident_date: '', claim_amount: '',
+    claim_reason: CLAIM_REASONS[0], explanation: '',
+    division: '', clerk: '', claimantName: '',
+    autoDamagesAccidentDate: '', otherReasonName: '',
   });
-  // Defendant form state
+  const [additionalReasons, setAdditionalReasons] = useState([]);
+  const [claimantSame, setClaimantSame] = useState(false); // claimant = plaintiff
+  // Plaintiff (profile) info — the PDF pulls this from your plaintiff row
+  const [plaintiff, setPlaintiff] = useState({
+    name: '', address: '', city: '', state: '', zip: '', phone: '', email: '',
+  });
   const [defendant, setDefendant] = useState({
     name: '', address: '', city: '', state: '', zip: '', phone: '', email: '',
   });
+  // Interpreters
+  const [interpP, setInterpP] = useState({ required: false, name: '', language: '' });
+  const [interpD, setInterpD] = useState({ name: '', language: '' });
+  // Servicemembers Civil Relief Act
+  const [smcr, setSmcr] = useState({ status: 'unknown', factsIfCovered: '', reasonIfNotCovered: '' });
+  // Signature
+  const [signature, setSignature] = useState({ city: '', state: '', date: '', plaintiffName: '' });
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +87,7 @@ export default function CaseDetail({ caseId, onBack }) {
       try {
         const [row, stepList] = await Promise.all([getCase(caseId), getCaseSteps()]);
         if (cancelled) return;
+        const extra = row.pdf_extra_fields || {};
         setCaseRow(row);
         setSteps(stepList);
         setForm({
@@ -73,7 +96,23 @@ export default function CaseDetail({ caseId, onBack }) {
           incident_date: row.incident_date || '',
           claim_amount: row.claim_amount != null ? String(row.claim_amount) : '',
           claim_reason: row.claim_reason || CLAIM_REASONS[0],
-          explanation: row.pdf_extra_fields?.explanation || '',
+          explanation: extra.explanation || '',
+          division: extra.division || '',
+          clerk: extra.clerk || '',
+          claimantName: extra.claimantName || '',
+          autoDamagesAccidentDate: extra.autoDamagesAccidentDate || '',
+          otherReasonName: extra.otherReasonName || '',
+        });
+        setAdditionalReasons(extra.additionalReasons || []);
+        setClaimantSame(extra.claimantSameAsPlaintiff === true);
+        setPlaintiff({
+          name: row.plaintiff?.name || '',
+          address: row.plaintiff?.address || '',
+          city: row.plaintiff?.city || '',
+          state: row.plaintiff?.state || '',
+          zip: row.plaintiff?.zip || '',
+          phone: row.plaintiff?.phone || '',
+          email: row.plaintiff?.email || '',
         });
         setDefendant({
           name: row.defendant?.name || '',
@@ -83,6 +122,26 @@ export default function CaseDetail({ caseId, onBack }) {
           zip: row.defendant?.zip || '',
           phone: row.defendant?.phone || '',
           email: row.defendant?.email || '',
+        });
+        setInterpP({
+          required: extra.interpreterPlaintiff?.required === true,
+          name: extra.interpreterPlaintiff?.name || '',
+          language: extra.interpreterPlaintiff?.language || '',
+        });
+        setInterpD({
+          name: extra.interpreterDefendant?.name || '',
+          language: extra.interpreterDefendant?.language || '',
+        });
+        setSmcr({
+          status: extra.serviceMemberCivilRelief?.status || 'unknown',
+          factsIfCovered: extra.serviceMemberCivilRelief?.factsIfCovered || '',
+          reasonIfNotCovered: extra.serviceMemberCivilRelief?.reasonIfNotCovered || '',
+        });
+        setSignature({
+          city: extra.signature?.city || '',
+          state: extra.signature?.state || '',
+          date: extra.signature?.date || '',
+          plaintiffName: extra.signature?.plaintiffName || row.plaintiff?.name || '',
         });
       } catch (err) {
         console.error(`[CaseDetail] Failed to load case ${caseId}:`, err);
@@ -94,41 +153,94 @@ export default function CaseDetail({ caseId, onBack }) {
     return () => { cancelled = true; };
   }, [caseId]);
 
-  const setField = (key) => (e) => {
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-    setSaved(false);
-  };
-  const setDefField = (key) => (e) => {
-    setDefendant((d) => ({ ...d, [key]: e.target.value }));
-    setSaved(false);
+  const touch = () => setSaved(false);
+  const setField = (key) => (e) => { setForm((f) => ({ ...f, [key]: e.target.value })); touch(); };
+  const setPl = (key) => (e) => { setPlaintiff((p) => ({ ...p, [key]: e.target.value })); touch(); };
+  const setDef = (key) => (e) => { setDefendant((d) => ({ ...d, [key]: e.target.value })); touch(); };
+  const setSig = (key) => (e) => { setSignature((s) => ({ ...s, [key]: e.target.value })); touch(); };
+
+  const toggleAdditionalReason = (reason) => {
+    setAdditionalReasons((prev) =>
+      prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]
+    );
+    touch();
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const allReasons = [form.claim_reason, ...additionalReasons];
+
+  // Saves everything; returns true on success (used by Download PDF too).
+  const doSave = async () => {
     setError('');
     setSaved(false);
 
-    if (!form.case_name.trim()) { setError('Case name is required.'); return; }
+    if (!form.case_name.trim()) { setError('Case name is required.'); return false; }
     const amount = Number(form.claim_amount);
     if (!form.claim_amount || Number.isNaN(amount) || amount <= 0) {
       setError('Please enter a valid claim amount.');
-      return;
+      return false;
     }
     const hasDefendantInfo = Object.values(defendant).some((v) => v.trim() !== '');
     if (hasDefendantInfo && !defendant.name.trim()) {
       setError('Defendant name is required when providing defendant information.');
-      return;
+      return false;
     }
+    if (!plaintiff.name.trim()) { setError('Your name is required.'); return false; }
 
     setBusy(true);
     try {
+      // 1. Plaintiff profile (the PDF reads your contact info from it)
+      await updateMyProfile({
+        name: plaintiff.name.trim(),
+        address: plaintiff.address.trim(),
+        city: plaintiff.city.trim(),
+        state: plaintiff.state.trim(),
+        zip: plaintiff.zip.trim(),
+        phone: plaintiff.phone.trim(),
+        email: plaintiff.email.trim(),
+      });
+
+      // 2. Case + defendant + all PDF extra fields
       const patch = {
         case_name: form.case_name.trim(),
         case_number: form.case_number.trim() || undefined,
         incident_date: form.incident_date,
         claim_amount: amount,
         claim_reason: form.claim_reason,
-        pdf_extra_fields: { explanation: form.explanation },
+        pdf_extra_fields: {
+          explanation: form.explanation,
+          additionalReasons: additionalReasons.filter((r) => r !== form.claim_reason),
+          division: form.division || undefined,
+          clerk: form.clerk || undefined,
+          claimantName: (claimantSame ? plaintiff.name.trim() : form.claimantName) || undefined,
+          claimantSameAsPlaintiff: claimantSame,
+          autoDamagesAccidentDate: allReasons.includes('Auto_damages')
+            ? form.autoDamagesAccidentDate || undefined
+            : undefined,
+          otherReasonName: allReasons.includes('Other')
+            ? form.otherReasonName || undefined
+            : undefined,
+          interpreterPlaintiff: {
+            required: interpP.required,
+            name: interpP.name || undefined,
+            language: interpP.language || undefined,
+          },
+          interpreterDefendant: {
+            required: Boolean(interpD.name || interpD.language),
+            name: interpD.name || undefined,
+            language: interpD.language || undefined,
+          },
+          serviceMemberCivilRelief: {
+            status: smcr.status,
+            factsIfCovered: smcr.status === 'yes' ? smcr.factsIfCovered || undefined : undefined,
+            reasonIfNotCovered: smcr.status === 'no' ? smcr.reasonIfNotCovered || undefined : undefined,
+          },
+          signature: {
+            city: signature.city,
+            state: signature.state,
+            date: signature.date,
+            plaintiffName: signature.plaintiffName,
+          },
+        },
       };
       if (hasDefendantInfo) {
         patch.defendant = {
@@ -145,11 +257,33 @@ export default function CaseDetail({ caseId, onBack }) {
       const fresh = await getCase(caseId);
       setCaseRow(fresh);
       setSaved(true);
+      return true;
     } catch (err) {
       console.error(`[CaseDetail] Failed to save case ${caseId}:`, err);
       setError(err.message || 'Failed to save changes.');
+      return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    await doSave();
+  };
+
+  const handleDownloadPdf = async () => {
+    const ok = await doSave();
+    if (!ok) return;
+    setDownloading(true);
+    setError('');
+    try {
+      await downloadCasePdf(caseId);
+    } catch (err) {
+      console.error(`[CaseDetail] PDF download failed for case ${caseId}:`, err);
+      setError(err.message || 'Failed to generate the PDF.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -171,6 +305,29 @@ export default function CaseDetail({ caseId, onBack }) {
       <StepProgressBar steps={steps} currentStepId={caseRow.current_step_id} />
 
       <form className="proto-form" onSubmit={handleSave}>
+        {/* ---- Court information ---- */}
+        <h4 className="section-heading">Court information</h4>
+        <label>
+          Courthouse division
+          <select value={form.division} onChange={setField('division')}>
+            <option value="">— Select a courthouse —</option>
+            {DIVISIONS.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </label>
+        <div className="form-row">
+          <label>
+            Clerk <span className="optional">(if known)</span>
+            <input type="text" value={form.clerk} onChange={setField('clerk')} />
+          </label>
+          <label>
+            Small claim number <span className="optional">(if assigned)</span>
+            <input type="text" value={form.case_number} onChange={setField('case_number')} placeholder="Court-assigned" />
+          </label>
+        </div>
+
+        {/* ---- Case information ---- */}
         <h4 className="section-heading">Case information</h4>
         <label>
           Case name
@@ -186,20 +343,58 @@ export default function CaseDetail({ caseId, onBack }) {
             <input type="number" min="0" step="0.01" value={form.claim_amount} onChange={setField('claim_amount')} />
           </label>
         </div>
-        <div className="form-row">
+        <label>
+          Claimant name <span className="optional">(as it should appear on the claim line)</span>
+          <input
+            type="text"
+            value={claimantSame ? plaintiff.name : form.claimantName}
+            onChange={setField('claimantName')}
+            disabled={claimantSame}
+          />
+        </label>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={claimantSame}
+            onChange={(e) => { setClaimantSame(e.target.checked); touch(); }}
+          />
+          Same as plaintiff
+        </label>
+        <label>
+          Primary reason for claim
+          <select value={form.claim_reason} onChange={setField('claim_reason')}>
+            {CLAIM_REASONS.map((r) => (
+              <option key={r} value={r}>{prettyReason(r)}</option>
+            ))}
+          </select>
+        </label>
+        <fieldset className="checkbox-fieldset">
+          <legend>Additional reasons <span className="optional">(check all that apply)</span></legend>
+          <div className="checkbox-grid">
+            {CLAIM_REASONS.filter((r) => r !== form.claim_reason).map((r) => (
+              <label key={r} className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={additionalReasons.includes(r)}
+                  onChange={() => toggleAdditionalReason(r)}
+                />
+                {prettyReason(r)}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {allReasons.includes('Auto_damages') && (
           <label>
-            Reason for claim
-            <select value={form.claim_reason} onChange={setField('claim_reason')}>
-              {CLAIM_REASONS.map((r) => (
-                <option key={r} value={r}>{prettyReason(r)}</option>
-              ))}
-            </select>
+            Auto damages — accident date
+            <input type="date" value={form.autoDamagesAccidentDate} onChange={setField('autoDamagesAccidentDate')} />
           </label>
+        )}
+        {allReasons.includes('Other') && (
           <label>
-            Case number <span className="optional">(if assigned)</span>
-            <input type="text" value={form.case_number} onChange={setField('case_number')} placeholder="Court-assigned" />
+            Other reason — describe
+            <input type="text" value={form.otherReasonName} onChange={setField('otherReasonName')} />
           </label>
-        </div>
+        )}
         <label>
           Explanation of claim
           <textarea
@@ -210,46 +405,212 @@ export default function CaseDetail({ caseId, onBack }) {
           />
         </label>
 
-        <h4 className="section-heading">Defendant information</h4>
+        {/* ---- Plaintiff (your) information ---- */}
+        <h4 className="section-heading">Your information <span className="optional">(appears on the PDF as Plaintiff)</span></h4>
         <label>
           Name
-          <input type="text" value={defendant.name} onChange={setDefField('name')} placeholder="Person or business you are suing" />
+          <input type="text" value={plaintiff.name} onChange={setPl('name')} />
         </label>
         <label>
           Address
-          <input type="text" value={defendant.address} onChange={setDefField('address')} />
+          <input type="text" value={plaintiff.address} onChange={setPl('address')} />
         </label>
         <div className="form-row">
           <label>
             City
-            <input type="text" value={defendant.city} onChange={setDefField('city')} />
+            <input type="text" value={plaintiff.city} onChange={setPl('city')} />
           </label>
           <label>
             State
-            <input type="text" value={defendant.state} onChange={setDefField('state')} />
+            <input type="text" value={plaintiff.state} onChange={setPl('state')} />
           </label>
           <label>
             ZIP
-            <input type="text" value={defendant.zip} onChange={setDefField('zip')} />
+            <input type="text" value={plaintiff.zip} onChange={setPl('zip')} />
           </label>
         </div>
         <div className="form-row">
           <label>
             Phone
-            <input type="tel" value={defendant.phone} onChange={setDefField('phone')} />
+            <input type="tel" value={plaintiff.phone} onChange={setPl('phone')} />
           </label>
           <label>
             Email
-            <input type="email" value={defendant.email} onChange={setDefField('email')} />
+            <input type="email" value={plaintiff.email} onChange={setPl('email')} />
           </label>
         </div>
+
+        {/* ---- Defendant information ---- */}
+        <h4 className="section-heading">Defendant information</h4>
+        <label>
+          Name
+          <input type="text" value={defendant.name} onChange={setDef('name')} placeholder="Person or business you are suing" />
+        </label>
+        <label>
+          Address
+          <input type="text" value={defendant.address} onChange={setDef('address')} />
+        </label>
+        <div className="form-row">
+          <label>
+            City
+            <input type="text" value={defendant.city} onChange={setDef('city')} />
+          </label>
+          <label>
+            State
+            <input type="text" value={defendant.state} onChange={setDef('state')} />
+          </label>
+          <label>
+            ZIP
+            <input type="text" value={defendant.zip} onChange={setDef('zip')} />
+          </label>
+        </div>
+        <div className="form-row">
+          <label>
+            Phone
+            <input type="tel" value={defendant.phone} onChange={setDef('phone')} />
+          </label>
+          <label>
+            Email
+            <input type="email" value={defendant.email} onChange={setDef('email')} />
+          </label>
+        </div>
+
+        {/* ---- Interpreters ---- */}
+        <h4 className="section-heading">Interpreter</h4>
+        <div className="radio-group" role="radiogroup" aria-label="Do you need an interpreter?">
+          <span className="radio-group-label">Do you need an interpreter?</span>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="interp-required"
+              checked={interpP.required === true}
+              onChange={() => { setInterpP((p) => ({ ...p, required: true })); touch(); }}
+            />
+            Yes
+          </label>
+          <label className="radio-label">
+            <input
+              type="radio"
+              name="interp-required"
+              checked={interpP.required === false}
+              onChange={() => { setInterpP((p) => ({ ...p, required: false })); touch(); }}
+            />
+            No
+          </label>
+        </div>
+        {interpP.required && (
+          <div className="form-row">
+            <label>
+              Interpreter name <span className="optional">(plaintiff)</span>
+              <input
+                type="text"
+                value={interpP.name}
+                onChange={(e) => { setInterpP((p) => ({ ...p, name: e.target.value })); touch(); }}
+              />
+            </label>
+            <label>
+              Language
+              <input
+                type="text"
+                value={interpP.language}
+                onChange={(e) => { setInterpP((p) => ({ ...p, language: e.target.value })); touch(); }}
+              />
+            </label>
+          </div>
+        )}
+        <div className="form-row">
+          <label>
+            Interpreter name <span className="optional">(defendant, if needed)</span>
+            <input
+              type="text"
+              value={interpD.name}
+              onChange={(e) => { setInterpD((d) => ({ ...d, name: e.target.value })); touch(); }}
+            />
+          </label>
+          <label>
+            Language
+            <input
+              type="text"
+              value={interpD.language}
+              onChange={(e) => { setInterpD((d) => ({ ...d, language: e.target.value })); touch(); }}
+            />
+          </label>
+        </div>
+
+        {/* ---- Servicemembers Civil Relief Act ---- */}
+        <h4 className="section-heading">Servicemembers Civil Relief Act</h4>
+        <div className="radio-group" role="radiogroup" aria-label="Is the defendant covered by the Servicemembers Civil Relief Act?">
+          <span className="radio-group-label">Is the defendant in active military service (covered by the Act)?</span>
+          {['yes', 'no', 'unknown'].map((s) => (
+            <label key={s} className="radio-label">
+              <input
+                type="radio"
+                name="smcr-status"
+                checked={smcr.status === s}
+                onChange={() => { setSmcr((v) => ({ ...v, status: s })); touch(); }}
+              />
+              {s === 'unknown' ? "Don't know" : s.charAt(0).toUpperCase() + s.slice(1)}
+            </label>
+          ))}
+        </div>
+        {smcr.status === 'yes' && (
+          <label>
+            Facts supporting coverage
+            <textarea
+              rows={2}
+              value={smcr.factsIfCovered}
+              onChange={(e) => { setSmcr((v) => ({ ...v, factsIfCovered: e.target.value })); touch(); }}
+            />
+          </label>
+        )}
+        {smcr.status === 'no' && (
+          <label>
+            Why the defendant is not covered
+            <textarea
+              rows={2}
+              value={smcr.reasonIfNotCovered}
+              onChange={(e) => { setSmcr((v) => ({ ...v, reasonIfNotCovered: e.target.value })); touch(); }}
+            />
+          </label>
+        )}
+
+        {/* ---- Signature ---- */}
+        <h4 className="section-heading">Signature</h4>
+        <div className="form-row">
+          <label>
+            Signed in city
+            <input type="text" value={signature.city} onChange={setSig('city')} />
+          </label>
+          <label>
+            State
+            <input type="text" value={signature.state} onChange={setSig('state')} />
+          </label>
+          <label>
+            Date
+            <input type="date" value={signature.date} onChange={setSig('date')} />
+          </label>
+        </div>
+        <label>
+          Plaintiff name (signature)
+          <input type="text" value={signature.plaintiffName} onChange={setSig('plaintiffName')} />
+        </label>
 
         {error && <div className="proto-error" role="alert">{error}</div>}
         {saved && <div className="proto-success" role="status">Changes saved.</div>}
 
-        <button type="submit" className="proto-btn" disabled={busy}>
-          {busy ? 'Saving…' : 'Save changes'}
-        </button>
+        <div className="case-detail-actions">
+          <button type="submit" className="proto-btn" disabled={busy || downloading}>
+            {busy ? 'Saving…' : 'Save changes'}
+          </button>
+          <button
+            type="button"
+            className="proto-btn secondary"
+            onClick={handleDownloadPdf}
+            disabled={busy || downloading}
+          >
+            {downloading ? 'Generating…' : 'Save & download PDF'}
+          </button>
+        </div>
       </form>
     </div>
   );

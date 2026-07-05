@@ -14,7 +14,7 @@ import ComingSoon from './pages/ComingSoon';
 import TermsOfService from './pages/TermsOfService';
 import ScrollToTop from './pages/ScrollToTop';
 import Footer from './pages/Footer';
-import PrototypeModal from './components/PrototypeModal';
+import Prototype from './pages/Prototype';
 
 import logo from './media/logo.png';
 
@@ -32,6 +32,7 @@ function RouteTransitions() {
         <Route path="/team"             element={<Page><Team /></Page>} />
         <Route path="/small-claims-101" element={<Page><SmallClaims101 /></Page>} />
         <Route path="/coming-soon"      element={<Page><ComingSoon /></Page>} />
+        <Route path="/prototype"        element={<Page><Prototype /></Page>} />
         <Route path="/terms-of-service" element={<Page><TermsOfService /></Page>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -55,7 +56,6 @@ const Page = ({ children }) => (
 function App() {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [showPrototype, setShowPrototype] = useState(false);
 
   return (
     <Router>
@@ -80,12 +80,7 @@ function App() {
             <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
             <HashLink smooth to="/#features" onClick={() => setMenuOpen(false)}>Features</HashLink>
             <Link to="/team" onClick={() => setMenuOpen(false)}>Team</Link>
-            <button
-              className="login-link"
-              onClick={() => { setMenuOpen(false); setShowPrototype(true); }}
-            >
-              Prototype
-            </button>
+            <Link to="/prototype" onClick={() => setMenuOpen(false)}>Prototype</Link>
             <Link to="/small-claims-101" onClick={() => setMenuOpen(false)}>Small Claims 101</Link>
             <button
               className="login-link"
@@ -101,10 +96,6 @@ function App() {
 
         <Footer />
       </div>
-
-      {showPrototype && (
-        <PrototypeModal onClose={() => setShowPrototype(false)} />
-      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>

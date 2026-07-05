@@ -127,9 +127,28 @@ export async function getMe() {
   }
 }
 
+/** PATCH /api/plaintiffs/me → updated plaintiff profile row. */
+export async function updateMyProfile(patch) {
+  try {
+    return await request('/api/plaintiffs/me', { method: 'PATCH', body: patch, auth: true });
+  } catch (err) {
+    console.error('[api] updateMyProfile failed:', err);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Case endpoints
 // ---------------------------------------------------------------------------
+
+export const DIVISIONS = [
+  'East Division, Redmond Courthouse, 8601 160th Ave. N.E. Redmond, WA 98052',
+  'South Division, Burien Courthouse, 601 SW 149th St. Burien WA 98166',
+  'South Division, MRJC Courthouse, 401 4th Ave N., Kent, WA 98032',
+  'Vashon Courthouse, 10011 S.W. Bank Road, Vashon 98070',
+  'West Division, Seattle Courthouse, 516 3rd Ave, Room E-327 Seattle WA 98104',
+  'West Division, Shoreline Courthouse, 18050 Meridian Ave N shoreline WA 98133',
+];
 
 export const CLAIM_REASONS = [
   'Faulty_Workmanship',
@@ -190,6 +209,44 @@ export async function getCaseSteps() {
   } catch (err) {
     console.error('[api] getCaseSteps failed:', err);
     throw err;
+  }
+}
+
+/** POST /api/cases/:id/fill → downloads the filled PDF in the browser. */
+export async function downloadCasePdf(caseId, filename = 'notice-of-small-claim-filled.pdf') {
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/api/cases/${caseId}/fill`, { method: 'POST' });
+  } catch (err) {
+    console.error(`[api] downloadCasePdf(${caseId}) network error:`, err);
+    throw new Error('Cannot reach the server. Is the backend running?');
+  }
+
+  if (!response.ok) {
+    let message = `PDF generation failed (${response.status})`;
+    try {
+      const json = await response.json();
+      if (json?.error) message = json.error;
+    } catch (err) {
+      console.error(`[api] downloadCasePdf(${caseId}) failed to parse error body:`, err);
+    }
+    console.error(`[api] downloadCasePdf(${caseId}) → ${response.status}: ${message}`);
+    throw new Error(message);
+  }
+
+  try {
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(`[api] downloadCasePdf(${caseId}) failed to save file:`, err);
+    throw new Error('Failed to download the PDF.');
   }
 }
 
