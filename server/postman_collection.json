@@ -1,0 +1,225 @@
+{
+  "info": {
+    "name": "ClaimRunner Backend",
+    "description": "All endpoints from HANDOFF.md. Import into Postman. Run Signup or Login first — the token is captured automatically into {{token}}. Created case/defendant IDs are also auto-captured.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "caseId", "value": "" },
+    { "key": "defendantId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.session && json.session.access_token) {",
+                  "  pm.collectionVariables.set('token', json.session.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Khoa Luong\",\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.session && json.session.access_token) {",
+                  "  pm.collectionVariables.set('token', json.session.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me (profile)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Plaintiffs",
+      "item": [
+        {
+          "name": "Create Plaintiff (no auth)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/plaintiffs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Plaintiff\",\n  \"dob\": \"1990-04-12\",\n  \"address\": \"123 Main St\",\n  \"city\": \"Seattle\",\n  \"state\": \"WA\",\n  \"zip\": \"98104\",\n  \"phone\": \"206-555-0101\",\n  \"email\": \"jane@example.com\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Defendants",
+      "item": [
+        {
+          "name": "Create Defendant 🔒",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('defendantId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/defendants",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Repairs LLC\",\n  \"address\": \"456 Industrial Way\",\n  \"city\": \"Kent\",\n  \"state\": \"WA\",\n  \"zip\": \"98032\",\n  \"phone\": \"253-555-0102\",\n  \"email\": \"contact@acmerepairs.example.com\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cases",
+      "item": [
+        {
+          "name": "Create Case 🔒",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('caseId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/cases",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"case_name\": \"Luong v. Acme Repairs\",\n  \"incident_date\": \"2026-03-15\",\n  \"claim_amount\": 3500.00,\n  \"claim_reason\": \"Faulty_Workmanship\",\n  \"defendant_id\": \"{{defendantId}}\",\n  \"pdf_extra_fields\": {\n    \"explanation\": \"Paid $3,500 for a bathroom remodel that was never completed. Contractor abandoned the job after demolition.\",\n    \"additionalReasons\": [\"Property_Damage\"],\n    \"division\": \"West Division, Seattle Courthouse, 516 3rd Ave, Room E-327 Seattle WA 98104\",\n    \"claimantName\": \"Khoa Luong\",\n    \"interpreterPlaintiff\": {\n      \"required\": false\n    },\n    \"serviceMemberCivilRelief\": {\n      \"status\": \"no\",\n      \"reasonIfNotCovered\": \"Defendant is a business entity, not an individual servicemember.\"\n    },\n    \"signature\": {\n      \"city\": \"Seattle\",\n      \"state\": \"WA\",\n      \"date\": \"2026-07-05\",\n      \"plaintiffName\": \"Khoa Luong\"\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Case by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/cases/{{caseId}}"
+          }
+        },
+        {
+          "name": "Fill PDF from Case",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/cases/{{caseId}}/fill",
+            "description": "No body. Returns PDF binary — use Postman's 'Send and Download' (arrow next to Send) to save the file."
+          }
+        },
+        {
+          "name": "Advance Case Step",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/cases/{{caseId}}/step",
+            "description": "No body. Advances to the next step; 400 when already on step 7."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Case Steps",
+      "item": [
+        {
+          "name": "List All Steps",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/case-steps"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Direct PDF Fill (no DB)",
+      "item": [
+        {
+          "name": "POST /fill",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/fill",
+            "description": "Full FormData in, PDF binary out. Use 'Send and Download' to save the file.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clerk\": \"J. Smith\",\n  \"division\": \"West Division, Seattle Courthouse, 516 3rd Ave, Room E-327 Seattle WA 98104\",\n  \"smallClaimNumber\": \"26-SC-001234\",\n  \"plaintiffs\": [\n    {\n      \"name\": \"Khoa Luong\",\n      \"address\": \"123 Main St\",\n      \"city\": \"Seattle\",\n      \"state\": \"WA\",\n      \"zip\": \"98104\",\n      \"phone\": \"206-555-0101\",\n      \"email\": \"khoa@example.com\"\n    }\n  ],\n  \"defendants\": [\n    {\n      \"name\": \"Acme Repairs LLC\",\n      \"address\": \"456 Industrial Way\",\n      \"city\": \"Kent\",\n      \"state\": \"WA\",\n      \"zip\": \"98032\",\n      \"phone\": \"253-555-0102\",\n      \"email\": \"contact@acmerepairs.example.com\"\n    }\n  ],\n  \"interpreterPlaintiff\": {\n    \"required\": false\n  },\n  \"claimantName\": \"Khoa Luong\",\n  \"claimAmount\": \"3500.00\",\n  \"incidentDate\": \"2026-03-15\",\n  \"claim\": {\n    \"reasons\": [\"Faulty_Workmanship\", \"Property_Damage\"],\n    \"explanation\": \"Paid $3,500 for a bathroom remodel that was never completed. Contractor abandoned the job after demolition.\"\n  },\n  \"serviceMemberCivilRelief\": {\n    \"status\": \"no\",\n    \"reasonIfNotCovered\": \"Defendant is a business entity, not an individual servicemember.\"\n  },\n  \"signature\": {\n    \"city\": \"Seattle\",\n    \"state\": \"WA\",\n    \"date\": \"2026-07-05\",\n    \"plaintiffName\": \"Khoa Luong\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
