@@ -86,6 +86,29 @@ export async function createDefendant(input: {
   }
 }
 
+export async function updateDefendant(
+  defendantId: string,
+  patch: Partial<Omit<DefendantRow, 'id' | 'created_at'>>
+): Promise<DefendantRow> {
+  try {
+    const rows = await supabaseRest<DefendantRow[]>({
+      method: 'PATCH',
+      table: 'defendants',
+      query: { id: `eq.${defendantId}` },
+      body: patch,
+      returnRepresentation: true,
+    });
+    const row = rows?.[0];
+    if (!row) {
+      throw new NotFoundError(`Defendant not found: ${defendantId}`);
+    }
+    return row;
+  } catch (err) {
+    console.error(`[queries] updateDefendant(${defendantId}) failed:`, err);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Case steps
 // ---------------------------------------------------------------------------
@@ -150,6 +173,25 @@ export async function createCase(input: {
   }
 }
 
+/** All cases belonging to a plaintiff, newest first, with defendant + step joined. */
+export async function listCasesByPlaintiff(plaintiffId: string): Promise<CaseWithParties[]> {
+  try {
+    const rows = await supabaseRest<CaseWithParties[]>({
+      method: 'GET',
+      table: 'cases',
+      query: {
+        plaintiff_id: `eq.${plaintiffId}`,
+        select: '*,defendant:defendant_id(*),current_step:current_step_id(*)',
+        order: 'created_at.desc',
+      },
+    });
+    return rows ?? [];
+  } catch (err) {
+    console.error(`[queries] listCasesByPlaintiff(${plaintiffId}) failed:`, err);
+    throw err;
+  }
+}
+
 /** Fetch a case joined with its plaintiff and defendant rows. */
 export async function getCaseWithParties(caseId: string): Promise<CaseWithParties> {
   try {
@@ -175,7 +217,19 @@ export async function getCaseWithParties(caseId: string): Promise<CaseWithPartie
 
 export async function updateCase(
   caseId: string,
-  patch: Partial<Pick<CaseRow, 'case_number' | 'case_name' | 'current_step_id' | 'defendant_id' | 'pdf_extra_fields'>>
+  patch: Partial<
+    Pick<
+      CaseRow,
+      | 'case_number'
+      | 'case_name'
+      | 'incident_date'
+      | 'claim_amount'
+      | 'claim_reason'
+      | 'current_step_id'
+      | 'defendant_id'
+      | 'pdf_extra_fields'
+    >
+  >
 ): Promise<CaseRow> {
   try {
     const rows = await supabaseRest<CaseRow[]>({

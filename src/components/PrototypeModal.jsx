@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { getMe, getToken, login, logout, signup } from '../api/client';
+import CaseList from './CaseList';
+import CaseDetail from './CaseDetail';
 import './PrototypeModal.scss';
 
 export default function PrototypeModal({ onClose }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [openCaseId, setOpenCaseId] = useState(null); // null = case list
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,27 +78,37 @@ export default function PrototypeModal({ onClose }) {
       console.error('[PrototypeModal] Logout failed:', err);
     } finally {
       setProfile(null);
+      setOpenCaseId(null);
       setBusy(false);
     }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal prototype-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal prototype-modal ${profile ? 'prototype-modal--wide' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {profile ? (
           <>
-            <h2>Welcome, {profile.name}</h2>
-            <p className="proto-subtitle">You're logged in to the ClaimRunner prototype.</p>
-            <div className="proto-profile">
-              <div><span>Email</span>{profile.email || '—'}</div>
-              <div><span>Member since</span>{profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</div>
+            <div className="proto-header">
+              <div>
+                <h2>ClaimRunner</h2>
+                <p className="proto-user">Logged in as {profile.name}</p>
+              </div>
+              <div className="proto-header-actions">
+                <button className="proto-btn secondary small" onClick={handleLogout} disabled={busy}>
+                  {busy ? '…' : 'Log out'}
+                </button>
+                <button className="proto-btn small" onClick={onClose}>Close</button>
+              </div>
             </div>
-            <div className="proto-actions">
-              <button className="proto-btn secondary" onClick={handleLogout} disabled={busy}>
-                {busy ? 'Logging out…' : 'Log out'}
-              </button>
-              <button className="proto-btn" onClick={onClose}>Close</button>
-            </div>
+
+            {openCaseId ? (
+              <CaseDetail caseId={openCaseId} onBack={() => setOpenCaseId(null)} />
+            ) : (
+              <CaseList onOpenCase={(id) => setOpenCaseId(id)} />
+            )}
           </>
         ) : (
           <>

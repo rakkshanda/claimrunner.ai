@@ -126,3 +126,79 @@ export async function getMe() {
     throw err;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Case endpoints
+// ---------------------------------------------------------------------------
+
+export const CLAIM_REASONS = [
+  'Faulty_Workmanship',
+  'Merchandise',
+  'Auto_damages',
+  'wages',
+  'Loan',
+  'Return_of_Deposit',
+  'Rent',
+  'Property_Damage',
+  'Other',
+];
+
+/** GET /api/cases → the logged-in plaintiff's cases (newest first). */
+export async function listCases() {
+  try {
+    return await request('/api/cases', { auth: true });
+  } catch (err) {
+    console.error('[api] listCases failed:', err);
+    throw err;
+  }
+}
+
+/** POST /api/cases → created case row. */
+export async function createCase(caseData) {
+  try {
+    return await request('/api/cases', { method: 'POST', body: caseData, auth: true });
+  } catch (err) {
+    console.error('[api] createCase failed:', err);
+    throw err;
+  }
+}
+
+/** GET /api/cases/:id → case with plaintiff + defendant joined. */
+export async function getCase(caseId) {
+  try {
+    return await request(`/api/cases/${caseId}`);
+  } catch (err) {
+    console.error(`[api] getCase(${caseId}) failed:`, err);
+    throw err;
+  }
+}
+
+/** PATCH /api/cases/:id → updated case row. Accepts case fields, defendant object, pdf_extra_fields. */
+export async function updateCase(caseId, patch) {
+  try {
+    return await request(`/api/cases/${caseId}`, { method: 'PATCH', body: patch, auth: true });
+  } catch (err) {
+    console.error(`[api] updateCase(${caseId}) failed:`, err);
+    throw err;
+  }
+}
+
+/** GET /api/case-steps → ordered list of the 7 case steps. */
+export async function getCaseSteps() {
+  try {
+    return await request('/api/case-steps');
+  } catch (err) {
+    console.error('[api] getCaseSteps failed:', err);
+    throw err;
+  }
+}
+
+/** PATCH /api/cases/:id/step → { case, nextStep }. */
+export async function advanceCaseStep(caseId) {
+  try {
+    return await request(`/api/cases/${caseId}/step`, { method: 'PATCH' });
+  } catch (err) {
+    console.error(`[api] advanceCaseStep(${caseId}) failed:`, err);
+    throw err;
+  }
+}

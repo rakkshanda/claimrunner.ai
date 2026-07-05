@@ -5,6 +5,37 @@
 
   h2 { text-align: center; }
 
+  /* Wider layout once logged in (case list / case detail) */
+  &.prototype-modal--wide {
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+
+    h2 { text-align: left; margin: 0; font-size: 1.25rem; }
+  }
+
+  .proto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid #e4eaf4;
+  }
+
+  .proto-user {
+    margin: 0.15rem 0 0;
+    font-size: 0.82rem;
+    color: #6b7a99;
+  }
+
+  .proto-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
   .proto-subtitle {
     text-align: center;
     margin: 0.4rem 0 1.2rem;
@@ -76,6 +107,201 @@
     border-radius: 8px;
     padding: 0.55rem 0.75rem;
     font-size: 0.85rem;
+    margin: 0.6rem 0;
+  }
+
+  .proto-success {
+    background: #e9f8ee;
+    border: 1px solid #b3e2c3;
+    color: #1a7f42;
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+    margin: 0.6rem 0;
+  }
+
+  /* Shared form extras */
+  .proto-form {
+    select, textarea {
+      border: 1px solid #cdd6e4;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #106aed;
+        box-shadow: 0 0 0 3px rgba(16, 106, 237, 0.15);
+      }
+    }
+    textarea { resize: vertical; }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 0.8rem;
+
+    label { flex: 1; }
+  }
+
+  .section-heading {
+    margin: 0.8rem 0 0;
+    padding-top: 0.8rem;
+    border-top: 1px solid #e4eaf4;
+    font-size: 0.95rem;
+    color: #0d1b3d;
+  }
+
+  .optional {
+    font-weight: 400;
+    color: #8a97b3;
+  }
+
+  .proto-btn.small {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* ---- Case list ---- */
+  .case-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.9rem;
+
+    h3 { margin: 0; font-size: 1.05rem; color: #0d1b3d; }
+  }
+
+  .case-create-form {
+    background: #f5f8fd;
+    border: 1px solid #dbe4f2;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .case-list-empty {
+    text-align: center;
+    color: #6b7a99;
+    font-size: 0.92rem;
+    padding: 1.2rem 0;
+  }
+
+  .case-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .case-item {
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1px solid #dbe4f2;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+
+    &:hover {
+      border-color: #106aed;
+      box-shadow: 0 4px 12px rgba(16, 106, 237, 0.12);
+      transform: translateY(-1px);
+    }
+  }
+
+  .case-item-name { font-weight: 700; color: #0d1b3d; font-size: 0.98rem; }
+  .case-item-meta { font-size: 0.85rem; color: #4a5878; }
+  .case-item-step { font-size: 0.78rem; font-weight: 600; color: #106aed; }
+
+  /* ---- Case detail ---- */
+  .case-back {
+    background: none;
+    border: none;
+    color: #106aed;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 0.6rem;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  .case-detail-title {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+    color: #0d1b3d;
+  }
+
+  /* ---- Step progress bar ---- */
+  .step-progress {
+    margin: 0.4rem 0 1.4rem;
+  }
+
+  .step-progress-track {
+    position: relative;
+    height: 4px;
+    background: #dbe4f2;
+    border-radius: 2px;
+    margin: 14px 14px 0;
+  }
+
+  .step-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #106aed;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .step-dot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #cdd6e4;
+    color: #8a97b3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.done {
+      background: #106aed;
+      border-color: #106aed;
+      color: #fff;
+    }
+
+    &.current {
+      border-color: #106aed;
+      color: #106aed;
+      box-shadow: 0 0 0 4px rgba(16, 106, 237, 0.18);
+    }
+  }
+
+  .step-progress-label {
+    text-align: center;
+    margin: 0.9rem 0 0;
+    font-size: 0.85rem;
+    color: #4a5878;
+
+    strong { color: #0d1b3d; }
   }
 
   /* Buttons — same pill vibe as .modal-close-btn */

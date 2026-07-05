@@ -7,8 +7,7 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "token", "value": "" },
-    { "key": "caseId", "value": "" },
-    { "key": "defendantId", "value": "" }
+    { "key": "caseId", "value": "" }
   ],
   "item": [
     {
@@ -107,37 +106,6 @@
       ]
     },
     {
-      "name": "Defendants",
-      "item": [
-        {
-          "name": "Create Defendant 🔒",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.id) pm.collectionVariables.set('defendantId', json.id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "url": "{{baseUrl}}/api/defendants",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Acme Repairs LLC\",\n  \"address\": \"456 Industrial Way\",\n  \"city\": \"Kent\",\n  \"state\": \"WA\",\n  \"zip\": \"98032\",\n  \"phone\": \"253-555-0102\",\n  \"email\": \"contact@acmerepairs.example.com\"\n}"
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "Cases",
       "item": [
         {
@@ -162,7 +130,31 @@
             "url": "{{baseUrl}}/api/cases",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"case_name\": \"Luong v. Acme Repairs\",\n  \"incident_date\": \"2026-03-15\",\n  \"claim_amount\": 3500.00,\n  \"claim_reason\": \"Faulty_Workmanship\",\n  \"defendant_id\": \"{{defendantId}}\",\n  \"pdf_extra_fields\": {\n    \"explanation\": \"Paid $3,500 for a bathroom remodel that was never completed. Contractor abandoned the job after demolition.\",\n    \"additionalReasons\": [\"Property_Damage\"],\n    \"division\": \"West Division, Seattle Courthouse, 516 3rd Ave, Room E-327 Seattle WA 98104\",\n    \"claimantName\": \"Khoa Luong\",\n    \"interpreterPlaintiff\": {\n      \"required\": false\n    },\n    \"serviceMemberCivilRelief\": {\n      \"status\": \"no\",\n      \"reasonIfNotCovered\": \"Defendant is a business entity, not an individual servicemember.\"\n    },\n    \"signature\": {\n      \"city\": \"Seattle\",\n      \"state\": \"WA\",\n      \"date\": \"2026-07-05\",\n      \"plaintiffName\": \"Khoa Luong\"\n    }\n  }\n}"
+              "raw": "{\n  \"case_name\": \"Luong v. Acme Repairs\",\n  \"incident_date\": \"2026-03-15\",\n  \"claim_amount\": 3500.00,\n  \"claim_reason\": \"Faulty_Workmanship\",\n  \"defendant\": {\n    \"name\": \"Acme Repairs LLC\",\n    \"address\": \"456 Industrial Way\",\n    \"city\": \"Kent\",\n    \"state\": \"WA\",\n    \"zip\": \"98032\",\n    \"phone\": \"253-555-0102\",\n    \"email\": \"contact@acmerepairs.example.com\"\n  },\n  \"pdf_extra_fields\": {\n    \"explanation\": \"Paid $3,500 for a bathroom remodel that was never completed. Contractor abandoned the job after demolition.\",\n    \"additionalReasons\": [\"Property_Damage\"],\n    \"division\": \"West Division, Seattle Courthouse, 516 3rd Ave, Room E-327 Seattle WA 98104\",\n    \"claimantName\": \"Khoa Luong\",\n    \"interpreterPlaintiff\": {\n      \"required\": false\n    },\n    \"serviceMemberCivilRelief\": {\n      \"status\": \"no\",\n      \"reasonIfNotCovered\": \"Defendant is a business entity, not an individual servicemember.\"\n    },\n    \"signature\": {\n      \"city\": \"Seattle\",\n      \"state\": \"WA\",\n      \"date\": \"2026-07-05\",\n      \"plaintiffName\": \"Khoa Luong\"\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "List My Cases 🔒",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/cases"
+          }
+        },
+        {
+          "name": "Update Case 🔒",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/cases/{{caseId}}",
+            "description": "All fields optional. `defendant` creates or updates the linked defendant row. `pdf_extra_fields` is shallow-merged with the existing blob.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"case_name\": \"Luong v. Acme Repairs (amended)\",\n  \"claim_amount\": 4200.00,\n  \"defendant\": {\n    \"name\": \"Acme Repairs LLC\",\n    \"city\": \"Kent\",\n    \"state\": \"WA\"\n  },\n  \"pdf_extra_fields\": {\n    \"explanation\": \"Updated explanation of the claim.\"\n  }\n}"
             }
           }
         },

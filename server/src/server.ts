@@ -14,7 +14,9 @@ import {
   createPlaintiff,
   getAllCaseSteps,
   getCaseWithParties,
+  listCasesByPlaintiff,
   updateCase,
+  updateDefendant,
 } from './db/queries.js';
 import {
   CLAIM_REASONS,
@@ -209,38 +211,12 @@ app.post(
 );
 
 // ---------------------------------------------------------------------------
-// Defendants
-// ---------------------------------------------------------------------------
-
-// POST /api/defendants — create a defendant contact record 🔒
-app.post(
-  '/api/defendants',
-  authenticate,
-  asyncHandler(async (req, res) => {
-    try {
-      const { name, address, city, state, zip, phone, email } = (req.body ?? {}) as Record<
-        string,
-        string | undefined
-      >;
-      if (!name?.trim()) {
-        console.error('[POST /api/defendants] Missing name');
-        res.status(400).json({ error: 'name is required' });
-        return;
-      }
-      const defendant = await createDefendant({ name: name.trim(), address, city, state, zip, phone, email });
-      res.status(201).json(defendant);
-    } catch (err) {
-      console.error('[POST /api/defendants] Error:', err);
-      res.status(errorStatus(err)).json({ error: errorMessage(err) });
-    }
-  })
-);
-
-// ---------------------------------------------------------------------------
 // Cases
 // ---------------------------------------------------------------------------
 
 // POST /api/cases — create a case; plaintiff_id injected from the session 🔒
+// Defendant info is provided inline via the `defendant` object; the server
+// creates the defendants row and links it to the case in one step.
 app.post(
   '/api/cases',
   authenticate,
@@ -251,7 +227,7 @@ app.post(
         incident_date,
         claim_amount,
         claim_reason,
-        defendant_id,
+        defendant,
         case_number,
         current_step_id,
         pdf_extra_fields,
@@ -260,7 +236,15 @@ app.post(
         incident_date?: string;
         claim_amount?: number;
         claim_reason?: string;
-        defendant_id?: string;
+        defendant?: {
+          name?: string;
+          address?: string;
+          city?: string;
+          state?: string;
+          zip?: string;
+          phone?: string;
+          email?: string;
+        };
         case_number?: string;
         current_step_id?: string;
         pdf_extra_fields?: Record<string, unknown>;
@@ -275,10 +259,28 @@ app.post(
       if (!claim_reason || !CLAIM_REASONS.includes(claim_reason as ClaimReason)) {
         missing.push(`claim_reason (one of: ${CLAIM_REASONS.join(', ')})`);
       }
+      if (defendant !== undefined && !defendant?.name?.trim()) {
+        missing.push('defendant.name (required when defendant is provided)');
+      }
       if (missing.length > 0) {
         console.error(`[POST /api/cases] Invalid body — missing/invalid: ${missing.join(', ')}`);
         res.status(400).json({ error: `Missing or invalid field(s): ${missing.join(', ')}` });
         return;
+      }
+
+      // Create the defendant row inline as part of case creation.
+      let defendant_id: string | undefined;
+      if (defendant) {
+        const createdDefendant = await createDefendant({
+          name: defendant.name!.trim(),
+          address: defendant.address,
+          city: defendant.city,
+          state: defendant.state,
+          zip: defendant.zip,
+          phone: defendant.phone,
+          email: defendant.email,
+        });
+        defendant_id = createdDefendant.id;
       }
 
       // plaintiff_id is NEVER accepted from the client — injected from the session.
@@ -298,6 +300,134 @@ app.post(
       console.error('[POST /api/cases] Error:', err);
       // Postgres constraint violations surface as UpstreamError; map obvious
       // client mistakes (enum/constraint) to 400 for a clearer signal.
+      if (err instanceof UpstreamError && /constraint|enum|violates|invalid input/i.test(err.message)) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.status(errorStatus(err)).json({ error: errorMessage(err) });
+    }
+  })
+);
+
+// GET /api/cases — list the authenticated plaintiff's cases 🔒
+app.get(
+  '/api/cases',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    try {
+      const cases = await listCasesByPlaintiff(req.plaintiff!.id);
+      res.status(200).json(cases);
+    } catch (err) {
+      console.error('[GET /api/cases] Error:', err);
+      res.status(errorStatus(err)).json({ error: errorMessage(err) });
+    }
+  })
+);
+
+// PATCH /api/cases/:id — update case details and/or the linked defendant 🔒
+// The `defendant` object updates the existing defendants row if the case has
+// one, otherwise creates it and links it. pdf_extra_fields is shallow-merged
+// with the existing blob so partial saves don't clobber other keys.
+app.patch(
+  '/api/cases/:id',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    try {
+      const existing = await getCaseWithParties(req.params.id);
+      if (existing.plaintiff_id !== req.plaintiff!.id) {
+        console.error(
+          `[PATCH /api/cases/${req.params.id}] Plaintiff ${req.plaintiff!.id} does not own this case`
+        );
+        res.status(404).json({ error: `Case not found: ${req.params.id}` });
+        return;
+      }
+
+      const {
+        case_name,
+        case_number,
+        incident_date,
+        claim_amount,
+        claim_reason,
+        defendant,
+        pdf_extra_fields,
+      } = (req.body ?? {}) as {
+        case_name?: string;
+        case_number?: string;
+        incident_date?: string;
+        claim_amount?: number;
+        claim_reason?: string;
+        defendant?: {
+          name?: string;
+          address?: string;
+          city?: string;
+          state?: string;
+          zip?: string;
+          phone?: string;
+          email?: string;
+        };
+        pdf_extra_fields?: Record<string, unknown>;
+      };
+
+      const invalid: string[] = [];
+      if (case_name !== undefined && !case_name.trim()) invalid.push('case_name (must be non-empty)');
+      if (claim_amount !== undefined && Number.isNaN(Number(claim_amount))) invalid.push('claim_amount (numeric)');
+      if (claim_reason !== undefined && !CLAIM_REASONS.includes(claim_reason as ClaimReason)) {
+        invalid.push(`claim_reason (one of: ${CLAIM_REASONS.join(', ')})`);
+      }
+      if (defendant !== undefined && !defendant?.name?.trim()) {
+        invalid.push('defendant.name (required when defendant is provided)');
+      }
+      if (invalid.length > 0) {
+        console.error(`[PATCH /api/cases/${req.params.id}] Invalid body: ${invalid.join(', ')}`);
+        res.status(400).json({ error: `Invalid field(s): ${invalid.join(', ')}` });
+        return;
+      }
+
+      // Create or update the linked defendant.
+      let defendant_id: string | undefined;
+      if (defendant) {
+        const defendantPatch = {
+          name: defendant.name!.trim(),
+          address: defendant.address,
+          city: defendant.city,
+          state: defendant.state,
+          zip: defendant.zip,
+          phone: defendant.phone,
+          email: defendant.email,
+        };
+        if (existing.defendant_id) {
+          await updateDefendant(existing.defendant_id, defendantPatch);
+        } else {
+          const created = await createDefendant(defendantPatch);
+          defendant_id = created.id;
+        }
+      }
+
+      const patch: Parameters<typeof updateCase>[1] = {};
+      if (case_name !== undefined) patch.case_name = case_name.trim();
+      if (case_number !== undefined) patch.case_number = case_number;
+      if (incident_date !== undefined) patch.incident_date = incident_date;
+      if (claim_amount !== undefined) patch.claim_amount = Number(claim_amount);
+      if (claim_reason !== undefined) patch.claim_reason = claim_reason as ClaimReason;
+      if (defendant_id !== undefined) patch.defendant_id = defendant_id;
+      if (pdf_extra_fields !== undefined) {
+        patch.pdf_extra_fields = { ...(existing.pdf_extra_fields ?? {}), ...pdf_extra_fields };
+      }
+
+      if (Object.keys(patch).length === 0 && !defendant) {
+        console.error(`[PATCH /api/cases/${req.params.id}] Empty patch`);
+        res.status(400).json({ error: 'No updatable fields provided' });
+        return;
+      }
+
+      // If only the defendant row was updated, still return the fresh case.
+      const updated =
+        Object.keys(patch).length > 0
+          ? await updateCase(req.params.id, patch)
+          : await getCaseWithParties(req.params.id);
+      res.status(200).json(updated);
+    } catch (err) {
+      console.error(`[PATCH /api/cases/${req.params.id}] Error:`, err);
       if (err instanceof UpstreamError && /constraint|enum|violates|invalid input/i.test(err.message)) {
         res.status(400).json({ error: err.message });
         return;
