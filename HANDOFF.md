@@ -6,19 +6,21 @@ This document covers the data model, PDF field mapping, database schemas, and AP
 
 ## 1. Environment Variables
 
-Two environment variables are required. Set them in a `.env` file at the project root (see `.env.example`):
+Set these in `server/.env` (see `server/.env.example`). The first three are required; the rest have defaults.
 
 | Variable | Description |
 |---|---|
 | `SUPABASE_URL` | The bare project URL — e.g. `https://<ref>.supabase.co`. No trailing slash, no `/rest/v1/` path. |
 | `SUPABASE_ANON_KEY` | The project's public/anon key. Used for user-facing Auth endpoints (signup, login, logout). Safe for server-side use; never put it client-side alongside secret data. Found at Project Settings → API → `anon`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | The project's secret/service-role key. Bypasses Row Level Security. Used for PostgREST DB calls and server-side token validation. Never expose in a browser or commit to version control. |
+| `PORT` | Server port. Optional; defaults to `3000`. |
+| `PDF_TEMPLATE_PATH` | Path to the Notice of Small Claim PDF template. Optional; defaults to `./templates/notice-of-small-claim-september-2025.pdf` (relative to `server/`). |
 
 ---
 
 ## 2. The FormData Structure
 
-`src/types.ts` defines `FormData` — the canonical in-memory shape that drives PDF generation. Every API route that produces a PDF either accepts this shape directly (`POST /fill`) or reconstructs it from the database (`POST /api/cases/:id/fill`).
+`server/src/types.ts` defines `FormData` — the canonical in-memory shape that drives PDF generation. Every API route that produces a PDF either accepts this shape directly (`POST /fill`) or reconstructs it from the database (`POST /api/cases/:id/fill`).
 
 ### Full TypeScript definition
 
@@ -87,7 +89,7 @@ interface FormData {
 
 ### Validation rules (enforced before PDF generation)
 
-`validateFormData` in `src/fillPdf.ts` throws on any of these:
+`validateFormData` in `server/src/fillPdf.ts` throws on any of these:
 
 - `plaintiffs[0]` missing or `plaintiffs[0].name` empty
 - `defendants[0]` missing or `defendants[0].name` empty
@@ -102,7 +104,7 @@ interface FormData {
 
 ## 3. PDF Field Mapping
 
-The PDF template is `notice-of-small-claim-september-2025.pdf`. Fields are filled using `pdf-lib` (`PDFDocument.load` → `getForm()`). The implementation lives in `src/fillPdf.ts`.
+The PDF template is `notice-of-small-claim-september-2025.pdf` (place it in `server/templates/`, or point `PDF_TEMPLATE_PATH` at it). Fields are filled using `pdf-lib` (`PDFDocument.load` → `getForm()`). The implementation lives in `server/src/fillPdf.ts`.
 
 There are three field types used: `TextField`, `CheckBox`, and `Dropdown`.
 
@@ -181,7 +183,7 @@ The template PDF has two misspelled field names that must be used exactly as-is:
 
 ## 4. Database Schemas
 
-Migrations live in `supabase/migrations/`. Run them in order: `0001_init.sql`, `0002_add_pdf_extra_fields.sql`, then `0003_split_plaintiff_defendant.sql`.
+Migrations live in `server/supabase/migrations/`. Run them in order: `0001_init.sql`, `0002_add_pdf_extra_fields.sql`, then `0003_split_plaintiff_defendant.sql`.
 
 ### `plaintiffs`
 
@@ -305,6 +307,7 @@ The `cases.pdf_extra_fields` column holds every PDF field value that doesn't hav
   "clerk": "string",
   "smallClaimNumber": "string",
   "claimantName": "string",
+  "claimantSameAsPlaintiff": false,     // client metadata: claimantName mirrors the plaintiff's name; ignored by the PDF filler
   "interpreterPlaintiff": {
     "required": false,
     "name": "string",
@@ -339,15 +342,15 @@ Current policies grant full access to the `authenticated` role (open, for develo
 
 ## 5. Database-to-FormData Mapping
 
-`src/services/caseToFormData.ts` exports `buildFormDataFromCase(caseRow: CaseWithParties): FormData`. This is the bridge between the database and the PDF filler.
+`server/src/services/caseToFormData.ts` exports `buildFormDataFromCase(caseRow: CaseWithParties): FormData`. This is the bridge between the database and the PDF filler.
 
 **Merge logic:**
 
 - `claim.reasons` = `[caseRow.claim_reason, ...(extra.additionalReasons ?? [])]` — the primary reason lives in the relational column; any additional reasons come from `pdf_extra_fields`.
 - `claimAmount` = `caseRow.claim_amount.toFixed(2)` (numeric → string).
 - `incidentDate` = `caseRow.incident_date` (passed through as-is).
-- `plaintiffs[0]` = mapped from `caseRow.plaintiff` (the joined `user_profiles` row).
-- `defendants[0]` = mapped from `caseRow.defendant` (the joined `user_profiles` row).
+- `plaintiffs[0]` = mapped from `caseRow.plaintiff` (the joined `plaintiffs` row).
+- `defendants[0]` = mapped from `caseRow.defendant` (the joined `defendants` row).
 - Everything else (explanation, division, signature, interpreter, SMCR, clerk, etc.) comes from `pdf_extra_fields`.
 
 **Pre-fill validation** (`ValidationError` → HTTP 400):
@@ -364,7 +367,7 @@ Current policies grant full access to the `authenticated` role (open, for develo
 
 ## 6. Supabase REST Client
 
-`src/db/supabaseRest.ts` wraps Node 22's built-in `fetch` against the Supabase PostgREST API. No third-party SDK is used.
+`server/src/db/supabaseRest.ts` wraps Node 22's built-in `fetch` against the Supabase PostgREST API. No third-party SDK is used.
 
 **Request shape:**
 
@@ -385,7 +388,7 @@ Headers:
 | `eq.<value>` filter | `id=eq.some-uuid` | WHERE id = 'some-uuid' |
 | `order=col.asc` | `order=step_number.asc` | ORDER BY step_number ASC |
 | `limit=N` | `limit=1` | LIMIT 1 |
-| Embedded resource join | `select=*,plaintiff:plaintiff_id(*)` | LEFT JOIN user_profiles AS plaintiff ON plaintiff_id |
+| Embedded resource join | `select=*,plaintiff:plaintiff_id(*)` | LEFT JOIN plaintiffs AS plaintiff ON plaintiff_id |
 
 **Error handling:**
 
@@ -397,7 +400,7 @@ Headers:
 
 ## 7. API Routes
 
-All routes are on the Express server (`src/server.ts`), default port 3000.
+All routes are on the Express server (`server/src/server.ts`), default port 3000 (override with the `PORT` env var).
 
 Routes marked **🔒 requires auth** must include `Authorization: Bearer <access_token>` in the request headers. The server validates the token via Supabase Auth and attaches the plaintiff's profile to the request. Missing or invalid tokens return `401`.
 
@@ -413,7 +416,8 @@ Creates a Supabase Auth account and a linked `plaintiffs` row in one step.
 {
   "name": "string",     // required
   "email": "string",    // required
-  "password": "string"  // required
+  "password": "string", // required
+  "phone": "string"     // optional — stored on the plaintiffs row
 }
 ```
 
@@ -569,49 +573,39 @@ Create a plaintiff row. This is the platform user's own contact record.
 
 ---
 
-### `POST /api/defendants` 🔒 requires auth
+### `PATCH /api/plaintiffs/me` 🔒 requires auth
 
-Create a defendant contact record. Defendants are third parties — they have no auth linkage and no `dob` field.
+Update the logged-in plaintiff's own profile row. The PDF pulls plaintiff contact info from this row, so the frontend saves it here before generating a PDF.
 
-**Request body:**
-
-```jsonc
-{
-  "name": "string",       // required
-  "address": "string",    // optional
-  "city": "string",       // optional
-  "state": "string",      // optional
-  "zip": "string",        // optional
-  "phone": "string",      // optional
-  "email": "string"       // optional
-}
-```
-
-**Response `201`** — the created `defendants` row.
+**Request body** — all fields optional; only provided keys are updated:
 
 ```jsonc
 {
-  "id": "uuid",
-  "name": "string",
-  "address": "string" | null,
-  "city": "string" | null,
-  "state": "string" | null,
-  "zip": "string" | null,
-  "phone": "string" | null,
-  "email": "string" | null,
-  "created_at": "ISO timestamp"
+  "name": "string",       // must be non-empty if provided
+  "dob": "YYYY-MM-DD",
+  "address": "string",
+  "city": "string",
+  "state": "string",
+  "zip": "string",
+  "phone": "string",
+  "email": "string"
 }
 ```
+
+**Response `200`** — the updated `plaintiffs` row.
 
 **Errors:**
-- `400` — `name` missing.
+- `400` — empty patch, or `name` provided but empty.
+- `401` — missing/invalid token.
 - `502` — Supabase error.
 
 ---
 
+> **Removed:** `POST /api/defendants` no longer exists. Defendant information is provided inline when creating (`POST /api/cases`) or updating (`PATCH /api/cases/:id`) a case — the server creates or updates the `defendants` row and links it automatically.
+
 ### `POST /api/cases` 🔒 requires auth
 
-Create a case row. `plaintiff_id` is taken from the authenticated session — do not pass it in the request body.
+Create a case row. `plaintiff_id` is taken from the authenticated session — do not pass it in the request body. If a `defendant` object is provided, the server creates the `defendants` row and links it in the same step.
 
 **Request body:**
 
@@ -621,7 +615,15 @@ Create a case row. `plaintiff_id` is taken from the authenticated session — do
   "incident_date": "YYYY-MM-DD",  // required
   "claim_amount": 3500.00,        // required — numeric
   "claim_reason": "ClaimReason",  // required — Postgres enum value
-  "defendant_id": "uuid",         // optional
+  "defendant": {                  // optional — created + linked inline
+    "name": "string",             //   required when defendant is provided
+    "address": "string",          //   optional
+    "city": "string",             //   optional
+    "state": "string",            //   optional
+    "zip": "string",              //   optional
+    "phone": "string",            //   optional
+    "email": "string"             //   optional
+  },
   "case_number": "string",        // optional — court-assigned number
   "current_step_id": "uuid",      // optional — defaults to step 1 (File Small Claim)
   "pdf_extra_fields": { ... }     // optional — see Section 4 for shape
@@ -647,7 +649,77 @@ Create a case row. `plaintiff_id` is taken from the authenticated session — do
 ```
 
 **Errors:**
-- `400` — `case_name` or `plaintiff_id` missing, or Postgres constraint violated (e.g. `plaintiff_id === defendant_id`, unknown `claim_reason` enum value).
+- `400` — a required field missing/invalid, `defendant` provided without `defendant.name`, or Postgres constraint violated (e.g. unknown `claim_reason` enum value).
+- `401` — missing/invalid token.
+- `502` — Supabase error.
+
+---
+
+### `GET /api/cases` 🔒 requires auth
+
+List the authenticated plaintiff's cases, newest first, with the defendant and current step embedded.
+
+**Response `200`:**
+
+```jsonc
+[
+  {
+    // all CaseRow fields (see POST /api/cases response)
+    "defendant": { /* DefendantRow */ } | null,
+    "current_step": { /* CaseStepRow */ } | null
+  },
+  // …
+]
+```
+
+**Errors:**
+- `401` — missing/invalid token.
+- `502` — Supabase error.
+
+---
+
+### `PATCH /api/cases/:id` 🔒 requires auth
+
+Update case details and/or the linked defendant. Ownership is enforced — a case belonging to another plaintiff returns `404`.
+
+**Request body** — all fields optional; only provided keys are updated:
+
+```jsonc
+{
+  "case_name": "string",
+  "case_number": "string",
+  "incident_date": "YYYY-MM-DD",
+  "claim_amount": 4200.00,
+  "claim_reason": "ClaimReason",
+  "defendant": { /* same shape as POST /api/cases */ },
+  "pdf_extra_fields": { ... }
+}
+```
+
+**Behavior notes:**
+- `defendant` updates the existing linked `defendants` row if the case has one, otherwise creates and links it. `defendant.name` is required when `defendant` is provided.
+- `pdf_extra_fields` is **shallow-merged** into the existing blob — partial saves don't clobber other keys.
+- `plaintiff_id` and `current_step_id` cannot be changed here (use `PATCH /api/cases/:id/step` to advance the step).
+
+**Response `200`** — the updated `cases` row.
+
+**Errors:**
+- `400` — invalid field value, or no updatable fields provided.
+- `401` — missing/invalid token.
+- `404` — no such case, or case owned by another plaintiff.
+- `502` — Supabase error.
+
+---
+
+### `DELETE /api/cases/:id` 🔒 requires auth
+
+Delete a case. Ownership is enforced — a case belonging to another plaintiff returns `404`. Because defendants are created per-case, the linked `defendants` row is deleted afterward as cleanup (a cleanup failure is logged but does not fail the request).
+
+**Response `204`** — no body.
+
+**Errors:**
+- `401` — missing/invalid token.
+- `404` — no such case, or case owned by another plaintiff.
 - `502` — Supabase error.
 
 ---
@@ -663,8 +735,8 @@ Fetch a case joined with its plaintiff and defendant profiles.
 ```jsonc
 {
   // all CaseRow fields (see POST /api/cases response above)
-  "plaintiff": { /* UserProfileRow */ },
-  "defendant": { /* UserProfileRow */ } | null
+  "plaintiff": { /* PlaintiffRow */ },
+  "defendant": { /* DefendantRow */ } | null
 }
 ```
 
@@ -762,13 +834,10 @@ Advances a case to the next step in the ordered sequence. The server computes th
      → { session: { access_token, ... }, plaintiff: { id, ... } }
      (store access_token; plaintiff row is created automatically)
 
-2. POST /api/defendants  { name, address, ... }           [Authorization: Bearer <token>]
-     → { id: defendant_uuid, ... }
-
-3. POST /api/cases {                                       [Authorization: Bearer <token>]
+2. POST /api/cases {                                       [Authorization: Bearer <token>]
      case_name, incident_date, claim_amount,
      claim_reason,
-     defendant_id,
+     defendant: { name, address, ... },   // created + linked inline
      pdf_extra_fields: {
        explanation, additionalReasons,
        serviceMemberCivilRelief, signature,
@@ -777,10 +846,16 @@ Advances a case to the next step in the ordered sequence. The server computes th
    }  →  { id: case_uuid, ... }
    (plaintiff_id is injected server-side from the auth token — do not pass it)
 
-4. POST /api/cases/:case_uuid/fill  →  filled PDF download
+3. PATCH /api/plaintiffs/me { address, city, ... }         [Authorization: Bearer <token>]
+   (fill in the plaintiff's contact info — the PDF reads it from the plaintiffs row)
+
+4. PATCH /api/cases/:case_uuid { ... }                     [Authorization: Bearer <token>]
+   (optional — update case fields, defendant, or pdf_extra_fields incrementally)
+
+5. POST /api/cases/:case_uuid/fill  →  filled PDF download
 ```
 
-To re-generate the PDF for a previously saved case, skip to step 4 with the existing `case_uuid`.
+To re-generate the PDF for a previously saved case, skip to step 5 with the existing `case_uuid`. To list the user's cases (e.g. after login), call `GET /api/cases`; to remove one, `DELETE /api/cases/:id`.
 
 ### Returning user login
 
@@ -791,7 +866,10 @@ To re-generate the PDF for a previously saved case, skip to step 4 with the exis
 2. GET /api/auth/me                                        [Authorization: Bearer <token>]
      → plaintiff profile (use to pre-populate the form)
 
-3. Continue with defendant + case creation as above.
+3. GET /api/cases                                          [Authorization: Bearer <token>]
+     → existing cases (with defendant + current_step embedded)
+
+4. Continue with case creation/updates as above.
 ```
 
 ### Case step tracking
@@ -809,7 +887,7 @@ To re-generate the PDF for a previously saved case, skip to step 4 with the exis
 
 ### Overview
 
-Auth is fully implemented using **Supabase Auth** with a server-side REST wrapper in `src/db/auth.ts`. No third-party auth SDK is used. All auth calls go through the Express server — the browser never talks to Supabase directly.
+Auth is fully implemented using **Supabase Auth** with a server-side REST wrapper in `server/src/db/auth.ts`. No third-party auth SDK is used. All auth calls go through the Express server — the browser never talks to Supabase directly.
 
 ### Key design decisions
 
@@ -822,15 +900,17 @@ Auth is fully implemented using **Supabase Auth** with a server-side REST wrappe
 
 Using the service role key for signup or login causes Supabase to omit the session from the response, even with email confirmation disabled. Always use the anon key for user-facing auth endpoints.
 
-**Token validation is done via round-trip to Supabase**, not local JWT verification. This avoids the `jsonwebtoken` npm dependency and keeps validation simple. The `authenticate` middleware in `src/middleware/authenticate.ts` calls `getAuthUser(token)` → `GET /auth/v1/user`, then looks up the plaintiff row via `auth_user_id`.
+**Token validation is done via round-trip to Supabase**, not local JWT verification. This avoids the `jsonwebtoken` npm dependency and keeps validation simple. The `authenticate` middleware in `server/src/middleware/authenticate.ts` calls `getAuthUser(token)` → `GET /auth/v1/user`, then looks up the plaintiff row via `auth_user_id`.
 
 **`plaintiff_id` is never accepted from the client** on `POST /api/cases`. The server injects it from `req.plaintiff.id` (set by the authenticate middleware). This prevents a user from creating cases on behalf of another plaintiff.
 
-**Defendants have no auth.** The `defendants` table has no `auth_user_id` column. Creating a defendant requires the caller to be authenticated (to tie it to a session), but defendants themselves are not users of the platform.
+**Defendants have no auth.** The `defendants` table has no `auth_user_id` column. Defendant rows are created and updated only through the authenticated case endpoints (inline `defendant` object), but defendants themselves are not users of the platform.
 
-### `authenticate` middleware (`src/middleware/authenticate.ts`)
+**Ownership checks:** `PATCH /api/cases/:id` and `DELETE /api/cases/:id` verify `case.plaintiff_id === req.plaintiff.id` and return `404` otherwise (not `403`, to avoid leaking case existence). `GET /api/cases` only returns the authenticated plaintiff's rows.
 
-Applied to: `POST /api/defendants`, `POST /api/cases`, `GET /api/auth/me`.
+### `authenticate` middleware (`server/src/middleware/authenticate.ts`)
+
+Applied to: `GET /api/auth/me`, `PATCH /api/plaintiffs/me`, `POST /api/cases`, `GET /api/cases`, `PATCH /api/cases/:id`, `DELETE /api/cases/:id`.
 
 Flow:
 1. Reads `Authorization: Bearer <token>` header → 401 if missing or malformed.

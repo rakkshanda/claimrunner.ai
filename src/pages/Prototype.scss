@@ -271,6 +271,39 @@
     flex-wrap: wrap;
   }
 
+  /* Placeholder panels for steps 2–7 */
+  .step-placeholder {
+    background: #f5f8fd;
+    border: 1px dashed #b9c8e0;
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem;
+    text-align: center;
+
+    h4 {
+      margin: 0 0 0.6rem;
+      font-size: 1.1rem;
+      color: #0d1b3d;
+    }
+
+    p {
+      margin: 0 0 0.8rem;
+      color: #4a5878;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .step-placeholder-note {
+      font-size: 0.82rem;
+      color: #8a97b3;
+      font-style: italic;
+    }
+
+    .case-detail-actions {
+      justify-content: center;
+      margin-top: 0.4rem;
+    }
+  }
+
   /* ---- Case list ---- */
   .case-list-header {
     display: flex;
@@ -305,8 +338,35 @@
     gap: 0.6rem;
   }
 
+  .case-item-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .case-delete {
+    flex-shrink: 0;
+    width: 42px;
+    background: #fff;
+    border: 1px solid #dbe4f2;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #8a97b3;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: #e05a5a;
+      background: #fdecec;
+      color: #b3261e;
+    }
+
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+
   .case-item {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     text-align: left;
     background: #fff;
     border: 1px solid #dbe4f2;

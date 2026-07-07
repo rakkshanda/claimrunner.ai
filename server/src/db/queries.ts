@@ -132,6 +132,19 @@ export async function updateDefendant(
   }
 }
 
+export async function deleteDefendant(defendantId: string): Promise<void> {
+  try {
+    await supabaseRest<void>({
+      method: 'DELETE',
+      table: 'defendants',
+      query: { id: `eq.${defendantId}` },
+    });
+  } catch (err) {
+    console.error(`[queries] deleteDefendant(${defendantId}) failed:`, err);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Case steps
 // ---------------------------------------------------------------------------
@@ -269,6 +282,19 @@ export async function updateCase(
     return row;
   } catch (err) {
     console.error(`[queries] updateCase(${caseId}) failed:`, err);
+    throw err;
+  }
+}
+
+export async function deleteCase(caseId: string): Promise<void> {
+  try {
+    await supabaseRest<void>({
+      method: 'DELETE',
+      table: 'cases',
+      query: { id: `eq.${caseId}` },
+    });
+  } catch (err) {
+    console.error(`[queries] deleteCase(${caseId}) failed:`, err);
     throw err;
   }
 }

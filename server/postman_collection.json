@@ -41,7 +41,7 @@
             "url": "{{baseUrl}}/api/auth/signup",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Khoa Luong\",\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\"\n}"
+              "raw": "{\n  \"name\": \"Khoa Luong\",\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\",\n  \"phone\": \"206-555-0101\"\n}"
             }
           }
         },
@@ -187,6 +187,15 @@
             "method": "POST",
             "url": "{{baseUrl}}/api/cases/{{caseId}}/fill",
             "description": "No body. Returns PDF binary — use Postman's 'Send and Download' (arrow next to Send) to save the file."
+          }
+        },
+        {
+          "name": "Delete Case 🔒",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/cases/{{caseId}}",
+            "description": "Removes the case and its linked defendant record. Returns 204 on success; 404 if the case doesn't exist or belongs to another plaintiff."
           }
         },
         {

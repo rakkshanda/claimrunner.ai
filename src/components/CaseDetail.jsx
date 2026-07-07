@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  advanceCaseStep,
   CLAIM_REASONS,
   DIVISIONS,
   downloadCasePdf,
@@ -13,6 +14,16 @@ import {
   updateCase,
   updateMyProfile,
 } from '../api/client';
+
+// Placeholder copy for steps 2–7 until each step's real workflow is built.
+const STEP_PLACEHOLDERS = {
+  2: 'The defendant must be officially served with your Notice of Small Claim. This step will walk you through service options (sheriff, process server, or certified mail) and let you record proof of service.',
+  3: 'Before trial, many small claims are resolved through settlement. This step will help you track settlement offers, communications with the defendant, and any agreement you reach.',
+  4: 'Gather the evidence that supports your claim — receipts, contracts, photos, messages, and witness information. This step will let you organize and store your evidence for trial.',
+  5: 'Prepare for your day in court. This step will cover what to bring, how the hearing works, and let you review your evidence and notes before trial.',
+  6: "After the hearing, the court issues a judgment. This step will record the court's decision and what it means for your case.",
+  7: 'If you won, collect the judgment. This step will help you track payments from the defendant and the steps available if they do not pay.',
+};
 
 const prettyReason = (r) => r.replace(/_/g, ' ');
 
@@ -52,6 +63,7 @@ export default function CaseDetail({ caseId, onBack }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -272,6 +284,38 @@ export default function CaseDetail({ caseId, onBack }) {
     await doSave();
   };
 
+  const currentStepIndex = steps.findIndex((s) => s.id === caseRow?.current_step_id);
+  const currentStep = steps[currentStepIndex === -1 ? 0 : currentStepIndex] || null;
+  const isLastStep = currentStep && steps.length > 0 && currentStep.id === steps[steps.length - 1].id;
+
+  const handleAdvanceStep = async () => {
+    if (!currentStep) return;
+    const next = steps[steps.findIndex((s) => s.id === currentStep.id) + 1];
+    const confirmed = window.confirm(
+      `Move this case from "${currentStep.step_name}" to "${next ? next.step_name : 'the next step'}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    // On the filing step, save the form first so nothing is lost.
+    if (currentStep.step_number === 1) {
+      const ok = await doSave();
+      if (!ok) return;
+    }
+
+    setAdvancing(true);
+    setError('');
+    try {
+      const { case: updated } = await advanceCaseStep(caseId);
+      setCaseRow((prev) => ({ ...prev, ...updated }));
+      setSaved(false);
+    } catch (err) {
+      console.error(`[CaseDetail] Failed to advance step for case ${caseId}:`, err);
+      setError(err.message || 'Failed to advance to the next step.');
+    } finally {
+      setAdvancing(false);
+    }
+  };
+
   const handleDownloadPdf = async () => {
     const ok = await doSave();
     if (!ok) return;
@@ -304,6 +348,26 @@ export default function CaseDetail({ caseId, onBack }) {
 
       <StepProgressBar steps={steps} currentStepId={caseRow.current_step_id} />
 
+      {currentStep && currentStep.step_number !== 1 ? (
+        /* ---- Placeholder panels for steps 2–7 ---- */
+        <div className="step-placeholder">
+          <h4>{currentStep.step_name}</h4>
+          <p>{STEP_PLACEHOLDERS[currentStep.step_number] || 'Details for this step are coming soon.'}</p>
+          <p className="step-placeholder-note">This part of the process is under construction — check back soon.</p>
+
+          {error && <div className="proto-error" role="alert">{error}</div>}
+
+          <div className="case-detail-actions">
+            {!isLastStep ? (
+              <button type="button" className="proto-btn" onClick={handleAdvanceStep} disabled={advancing}>
+                {advancing ? 'Advancing…' : 'Continue to next step →'}
+              </button>
+            ) : (
+              <p className="step-placeholder-note">🎉 This case has reached the final step.</p>
+            )}
+          </div>
+        </div>
+      ) : (
       <form className="proto-form" onSubmit={handleSave}>
         {/* ---- Court information ---- */}
         <h4 className="section-heading">Court information</h4>
@@ -599,19 +663,29 @@ export default function CaseDetail({ caseId, onBack }) {
         {saved && <div className="proto-success" role="status">Changes saved.</div>}
 
         <div className="case-detail-actions">
-          <button type="submit" className="proto-btn" disabled={busy || downloading}>
+          <button type="submit" className="proto-btn" disabled={busy || downloading || advancing}>
             {busy ? 'Saving…' : 'Save changes'}
           </button>
           <button
             type="button"
             className="proto-btn secondary"
             onClick={handleDownloadPdf}
-            disabled={busy || downloading}
+            disabled={busy || downloading || advancing}
           >
             {downloading ? 'Generating…' : 'Save & download PDF'}
           </button>
+          <button
+            type="button"
+            className="proto-btn secondary"
+            onClick={handleAdvanceStep}
+            disabled={busy || downloading || advancing}
+            title="Saves the form, then moves the case to the next step"
+          >
+            {advancing ? 'Advancing…' : 'Continue to next step →'}
+          </button>
         </div>
       </form>
+      )}
     </div>
   );
 }

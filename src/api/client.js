@@ -77,11 +77,11 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
 // ---------------------------------------------------------------------------
 
 /** POST /api/auth/signup → { session, plaintiff }. Stores the token. */
-export async function signup(name, email, password) {
+export async function signup(name, email, password, phone) {
   try {
     const data = await request('/api/auth/signup', {
       method: 'POST',
-      body: { name, email, password },
+      body: { name, email, password, phone: phone || undefined },
     });
     if (data?.session?.access_token) setToken(data.session.access_token);
     return data;
@@ -198,6 +198,16 @@ export async function updateCase(caseId, patch) {
     return await request(`/api/cases/${caseId}`, { method: 'PATCH', body: patch, auth: true });
   } catch (err) {
     console.error(`[api] updateCase(${caseId}) failed:`, err);
+    throw err;
+  }
+}
+
+/** DELETE /api/cases/:id → removes the case and its linked defendant record. */
+export async function deleteCase(caseId) {
+  try {
+    return await request(`/api/cases/${caseId}`, { method: 'DELETE', auth: true });
+  } catch (err) {
+    console.error(`[api] deleteCase(${caseId}) failed:`, err);
     throw err;
   }
 }

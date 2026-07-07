@@ -12,6 +12,8 @@ import {
   createCase,
   createDefendant,
   createPlaintiff,
+  deleteCase,
+  deleteDefendant,
   getAllCaseSteps,
   getCaseWithParties,
   listCasesByPlaintiff,
@@ -76,10 +78,11 @@ app.post(
   '/api/auth/signup',
   asyncHandler(async (req, res) => {
     try {
-      const { name, email, password } = (req.body ?? {}) as {
+      const { name, email, password, phone } = (req.body ?? {}) as {
         name?: string;
         email?: string;
         password?: string;
+        phone?: string;
       };
       if (!name?.trim() || !email?.trim() || !password) {
         console.error('[POST /api/auth/signup] Missing required field(s)');
@@ -91,6 +94,7 @@ app.post(
       const plaintiff = await createPlaintiff({
         name: name.trim(),
         email: email.trim(),
+        phone: phone?.trim() || undefined,
         auth_user_id: user.id,
       });
 
@@ -475,6 +479,45 @@ app.patch(
         res.status(400).json({ error: err.message });
         return;
       }
+      res.status(errorStatus(err)).json({ error: errorMessage(err) });
+    }
+  })
+);
+
+// DELETE /api/cases/:id — remove a case (and its linked defendant record) 🔒
+app.delete(
+  '/api/cases/:id',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    try {
+      const existing = await getCaseWithParties(req.params.id);
+      if (existing.plaintiff_id !== req.plaintiff!.id) {
+        console.error(
+          `[DELETE /api/cases/${req.params.id}] Plaintiff ${req.plaintiff!.id} does not own this case`
+        );
+        res.status(404).json({ error: `Case not found: ${req.params.id}` });
+        return;
+      }
+
+      // Delete the case first (its FK restricts deleting the defendant while linked).
+      await deleteCase(req.params.id);
+
+      // Defendants are created per-case, so clean up the orphaned row.
+      // A failure here shouldn't fail the request — the case is already gone.
+      if (existing.defendant_id) {
+        try {
+          await deleteDefendant(existing.defendant_id);
+        } catch (err) {
+          console.error(
+            `[DELETE /api/cases/${req.params.id}] Case deleted but defendant ${existing.defendant_id} cleanup failed:`,
+            err
+          );
+        }
+      }
+
+      res.status(204).end();
+    } catch (err) {
+      console.error(`[DELETE /api/cases/${req.params.id}] Error:`, err);
       res.status(errorStatus(err)).json({ error: errorMessage(err) });
     }
   })

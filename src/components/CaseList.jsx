@@ -1,7 +1,7 @@
 // Case list view — shows the logged-in plaintiff's cases and a "new case" form.
 
 import { useCallback, useEffect, useState } from 'react';
-import { CLAIM_REASONS, createCase, listCases } from '../api/client';
+import { CLAIM_REASONS, createCase, deleteCase, listCases } from '../api/client';
 
 const prettyReason = (r) => r.replace(/_/g, ' ');
 
@@ -10,6 +10,7 @@ export default function CaseList({ onOpenCase }) {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // New case form state
   const [caseName, setCaseName] = useState('');
@@ -62,6 +63,25 @@ export default function CaseList({ onOpenCase }) {
       setError(err.message || 'Failed to create case.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleDelete = async (c) => {
+    const confirmed = window.confirm(
+      `Delete "${c.case_name}"? This permanently removes the case and its defendant information. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(c.id);
+    setError('');
+    try {
+      await deleteCase(c.id);
+      setCases((prev) => (prev ? prev.filter((x) => x.id !== c.id) : prev));
+    } catch (err) {
+      console.error(`[CaseList] Failed to delete case ${c.id}:`, err);
+      setError(err.message || 'Failed to delete case.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -125,7 +145,7 @@ export default function CaseList({ onOpenCase }) {
       ) : (
         <ul className="case-items">
           {cases.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className="case-item-row">
               <button className="case-item" onClick={() => onOpenCase(c.id)}>
                 <span className="case-item-name">{c.case_name}</span>
                 <span className="case-item-meta">
@@ -135,6 +155,15 @@ export default function CaseList({ onOpenCase }) {
                 <span className="case-item-step">
                   {c.current_step ? `Step ${c.current_step.step_number}: ${c.current_step.step_name}` : 'Not started'}
                 </span>
+              </button>
+              <button
+                className="case-delete"
+                onClick={() => handleDelete(c)}
+                disabled={deletingId === c.id}
+                aria-label={`Delete case ${c.case_name}`}
+                title="Delete case"
+              >
+                {deletingId === c.id ? '…' : '🗑'}
               </button>
             </li>
           ))}

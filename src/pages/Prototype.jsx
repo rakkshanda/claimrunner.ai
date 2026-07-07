@@ -12,6 +12,7 @@ export default function Prototype() {
   const [openCaseId, setOpenCaseId] = useState(null); // null = case list
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -54,7 +55,7 @@ export default function Prototype() {
     setBusy(true);
     try {
       if (mode === 'signup') {
-        const data = await signup(name.trim(), email.trim(), password);
+        const data = await signup(name.trim(), email.trim(), password, phone.trim());
         setProfile(data.plaintiff);
       } else {
         await login(email.trim(), password);
@@ -136,16 +137,28 @@ export default function Prototype() {
 
             <form className="proto-form" onSubmit={handleSubmit}>
               {mode === 'signup' && (
-                <label>
-                  Name
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your full name"
-                    autoComplete="name"
-                  />
-                </label>
+                <>
+                  <label>
+                    Name
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your full name"
+                      autoComplete="name"
+                    />
+                  </label>
+                  <label>
+                    Phone number
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="206-555-0101"
+                      autoComplete="tel"
+                    />
+                  </label>
+                </>
               )}
               <label>
                 Email
