@@ -16,6 +16,7 @@ import {
   deleteDefendant,
   getAllCaseSteps,
   getCaseWithParties,
+  getFirstCaseStep,
   listCasesByPlaintiff,
   updateCase,
   updateDefendant,
@@ -330,6 +331,19 @@ app.post(
         defendant_id = createdDefendant.id;
       }
 
+      // Default current_step_id to step 1 (File Small Claim) when not provided.
+      let stepId = current_step_id;
+      if (!stepId) {
+        try {
+          stepId = (await getFirstCaseStep())?.id;
+        } catch (err) {
+          console.error('[POST /api/cases] Failed to fetch default first step (continuing without):', err);
+        }
+        if (!stepId) {
+          console.error('[POST /api/cases] No case steps found — creating case with null current_step_id');
+        }
+      }
+
       // plaintiff_id is NEVER accepted from the client — injected from the session.
       const created = await createCase({
         case_name: case_name!.trim(),
@@ -339,7 +353,7 @@ app.post(
         plaintiff_id: req.plaintiff!.id,
         defendant_id,
         case_number,
-        current_step_id,
+        current_step_id: stepId,
         pdf_extra_fields,
       });
       res.status(201).json(created);
