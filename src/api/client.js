@@ -1,7 +1,14 @@
 // API client for the ClaimRunner backend (server/).
-// Base URL: set REACT_APP_API_URL in a root .env to override (CRA reads it at build time).
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5555';
+// Base URL resolution (baked in at build time by CRA):
+//   1. REACT_APP_API_URL, if set in a root .env — explicit override.
+//   2. Dev mode (`npm start`): the CRA dev server runs on :3000 and the API
+//      on :5555, so we point at localhost:5555 (CORS is enabled server-side).
+//   3. Production build: '' — relative URLs, because the Express server
+//      serves the build itself, so the API is on the same origin. This keeps
+//      it working for testers visiting via LAN IP, not just localhost.
+const API_BASE =
+  process.env.REACT_APP_API_URL ??
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:5555' : '');
 
 const TOKEN_KEY = 'claimrunner_token';
 

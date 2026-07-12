@@ -928,3 +928,15 @@ Current RLS policies grant full access to the `authenticated` role (open, for de
 - `plaintiffs`: `using (auth_user_id = auth.uid())`
 - `cases`: `using (plaintiff_id in (select id from plaintiffs where auth_user_id = auth.uid()))`
 - `defendants`: scoped to defendants referenced by the plaintiff's cases
+
+---
+
+## 10. ⚠️ Security Review Required Before Production
+
+**The current setup knowingly trades security for testing convenience. Do NOT go to production without addressing all of the following:**
+
+1. **Service-role key is distributed.** The launcher scripts (`start.command` / `start.bat`) embed the Supabase service-role key and write it into `server/.env` so non-technical testers can run the app locally with zero setup. Anyone with a copy of the repo/scripts effectively has full admin access to the database (the service key bypasses all RLS). **Rotate the service-role key in Supabase (Project Settings → API) as soon as local testing wraps up**, and remove the embedded keys from the scripts before any wider distribution.
+2. **RLS policies are wide open.** All tables grant full access to any `authenticated` role. Tighten per the RLS note above before real user data enters the system.
+3. **Every DB call uses the service key.** `server/src/db/supabaseRest.ts` authenticates all PostgREST calls with the service-role key; per-user authorization exists only in Express route logic (ownership checks). A production hardening pass should consider forwarding the user's JWT and letting tightened RLS enforce access at the DB layer.
+4. **Token validation uses the service key unnecessarily.** `getAuthUser` in `server/src/db/auth.ts` passes the service key as `apikey` when validating user tokens; the anon key suffices there and should be swapped in.
+5. **Production checklist additions:** re-enable Supabase email confirmation, restrict CORS (currently `cors()` allows all origins), and keep `server/.env` out of any distributed artifacts.

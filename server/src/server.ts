@@ -2,6 +2,8 @@
 // Routes per HANDOFF.md Section 7. Default port 3000.
 
 import 'dotenv/config';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import { fillPdf } from './fillPdf.js';
@@ -619,6 +621,26 @@ app.patch(
     }
   })
 );
+
+// ---------------------------------------------------------------------------
+// Frontend static serving (production build)
+// ---------------------------------------------------------------------------
+// If the CRA build exists (npm run build in the repo root), serve it so the
+// whole app — UI + API — runs off this one server. The frontend uses
+// HashRouter, so serving index.html at "/" is all the routing support needed.
+// In dev mode (CRA dev server on :3000) this block is inert: no build folder,
+// or requests simply never reach this server for pages.
+
+const FRONTEND_BUILD_PATH = path.resolve(process.env.FRONTEND_BUILD_PATH || '../build');
+if (existsSync(path.join(FRONTEND_BUILD_PATH, 'index.html'))) {
+  console.log(`[startup] Serving frontend build from ${FRONTEND_BUILD_PATH}`);
+  app.use(express.static(FRONTEND_BUILD_PATH));
+} else {
+  console.log(
+    `[startup] No frontend build found at ${FRONTEND_BUILD_PATH} — API-only mode. ` +
+      'Run "npm run build" in the repo root to serve the UI from this server.'
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Fallbacks
