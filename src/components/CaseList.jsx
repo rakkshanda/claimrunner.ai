@@ -5,12 +5,13 @@ import { CLAIM_REASONS, createCase, deleteCase, listCases } from '../api/client'
 
 const prettyReason = (r) => r.replace(/_/g, ' ');
 
-export default function CaseList({ onOpenCase }) {
+export default function CaseList({ onOpenCase, prefill, onPrefillConsumed }) {
   const [cases, setCases] = useState(null); // null = loading
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [prefilled, setPrefilled] = useState(false);
 
   // New case form state
   const [caseName, setCaseName] = useState('');
@@ -31,6 +32,20 @@ export default function CaseList({ onOpenCase }) {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  // Carry over values from the eligibility check into the new-case form (once).
+  useEffect(() => {
+    if (!prefill) return;
+    if (prefill.claim_amount !== undefined) setClaimAmount(String(prefill.claim_amount));
+    if (prefill.incident_date) setIncidentDate(prefill.incident_date);
+    if (prefill.claim_reason && CLAIM_REASONS.includes(prefill.claim_reason)) {
+      setClaimReason(prefill.claim_reason);
+    }
+    setShowForm(true); // open the form so the prefilled values are visible
+    setPrefilled(true);
+    onPrefillConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -57,6 +72,7 @@ export default function CaseList({ onOpenCase }) {
       setClaimAmount('');
       setClaimReason(CLAIM_REASONS[0]);
       setShowForm(false);
+      setPrefilled(false);
       onOpenCase(created.id); // jump straight into the new case
     } catch (err) {
       console.error('[CaseList] Failed to create case:', err);
@@ -96,6 +112,11 @@ export default function CaseList({ onOpenCase }) {
 
       {showForm && (
         <form className="proto-form case-create-form" onSubmit={handleCreate}>
+          {prefilled && (
+            <div className="case-prefill-note">
+              We carried over details from your eligibility check — just name your case and review.
+            </div>
+          )}
           <label>
             Case name
             <input

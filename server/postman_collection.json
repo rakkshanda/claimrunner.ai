@@ -7,7 +7,8 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "token", "value": "" },
-    { "key": "caseId", "value": "" }
+    { "key": "caseId", "value": "" },
+    { "key": "eligibilityFormId", "value": "" }
   ],
   "item": [
     {
@@ -41,7 +42,7 @@
             "url": "{{baseUrl}}/api/auth/signup",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Khoa Luong\",\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\",\n  \"phone\": \"206-555-0101\"\n}"
+              "raw": "{\n  \"name\": \"Khoa Luong\",\n  \"email\": \"khoa.test@example.com\",\n  \"password\": \"Str0ngPassw0rd!\",\n  \"phone\": \"206-555-0101\",\n  \"eligibility_form_id\": \"{{eligibilityFormId}}\"\n}"
             }
           }
         },
@@ -84,6 +85,35 @@
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Eligibility",
+      "item": [
+        {
+          "name": "Submit Eligibility Form",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('eligibilityFormId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/eligibility-forms",
+            "description": "Unauthenticated. Returns the created form with its id; capture it and pass to signup as eligibility_form_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": {\n    \"claimAmountUnder10k\": true,\n    \"incidentInWashington\": true,\n    \"withinStatuteOfLimitations\": true\n  },\n  \"eligible\": true\n}"
+            }
           }
         }
       ]

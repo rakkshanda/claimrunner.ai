@@ -2,13 +2,19 @@
 // interactive. Login/signup → case list → case detail (with step progress bar).
 
 import { useEffect, useState } from 'react';
-import { getMe, getToken, login, logout, signup } from '../api/client';
+import { getMe, getToken, login, logout, signup, updateMyProfile } from '../api/client';
 import CaseList from '../components/CaseList';
 import CaseDetail from '../components/CaseDetail';
+import EligibilityCheck from '../components/EligibilityCheck';
+import {
+  clearEligibility,
+  loadEligibility,
+  scheduleEligibilityExpiry,
+} from '../eligibility/eligibilityStorage';
 import './Prototype.scss';
 
 export default function Prototype() {
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('eligibility'); // 'eligibility' | 'login' | 'signup'
   const [openCaseId, setOpenCaseId] = useState(null); // null = case list
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,6 +23,7 @@ export default function Prototype() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState(null); // plaintiff row when logged in
+  const [casePrefill, setCasePrefill] = useState(null); // carried over from eligibility on signup
 
   // If a token is already stored, try to restore the session.
   useEffect(() => {
@@ -33,6 +40,9 @@ export default function Prototype() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Live-expire any stored eligibility result once it passes its TTL.
+  useEffect(() => scheduleEligibilityExpiry(() => {}), []);
 
   const switchMode = (next) => {
     setMode(next);
@@ -55,8 +65,32 @@ export default function Prototype() {
     setBusy(true);
     try {
       if (mode === 'signup') {
-        const data = await signup(name.trim(), email.trim(), password, phone.trim());
+        // Pull any eligibility submission to link the account + prefill the first case.
+        const stored = loadEligibility();
+        const data = await signup(
+          name.trim(),
+          email.trim(),
+          password,
+          phone.trim(),
+          stored?.formId || undefined
+        );
         setProfile(data.plaintiff);
+
+        if (stored) {
+          // Carry the case prefill into React state before wiping local storage.
+          if (stored.prefill && Object.keys(stored.prefill).length > 0) {
+            setCasePrefill(stored.prefill);
+            // Best-effort: persist the plaintiff's ZIP right away.
+            if (stored.prefill.zip) {
+              try {
+                await updateMyProfile({ zip: stored.prefill.zip });
+              } catch (zipErr) {
+                console.error('[Prototype] Failed to save prefilled ZIP:', zipErr);
+              }
+            }
+          }
+          clearEligibility(); // local copy gone the moment the account exists
+        }
       } else {
         await login(email.trim(), password);
         const me = await getMe();
@@ -80,13 +114,18 @@ export default function Prototype() {
     } finally {
       setProfile(null);
       setOpenCaseId(null);
+      setCasePrefill(null);
       setBusy(false);
     }
   };
 
   return (
     <div className="prototype-page">
-      <div className={`prototype-panel ${profile ? 'prototype-panel--wide' : ''}`}>
+      <div
+        className={`prototype-panel ${
+          profile || mode === 'eligibility' ? 'prototype-panel--wide' : ''
+        }`}
+      >
         {profile ? (
           <>
             <div className="proto-header">
@@ -104,19 +143,35 @@ export default function Prototype() {
             {openCaseId ? (
               <CaseDetail caseId={openCaseId} onBack={() => setOpenCaseId(null)} />
             ) : (
-              <CaseList onOpenCase={(id) => setOpenCaseId(id)} />
+              <CaseList
+                prefill={casePrefill}
+                onPrefillConsumed={() => setCasePrefill(null)}
+                onOpenCase={(id) => setOpenCaseId(id)}
+              />
             )}
           </>
         ) : (
-          <div className="proto-auth">
-            <h2>{mode === 'login' ? 'Log in' : 'Create your account'}</h2>
+          <div className={`proto-auth ${mode === 'eligibility' ? 'proto-auth--wide' : ''}`}>
+            <h2>
+              {mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create your account' : 'Am I eligible?'}
+            </h2>
             <p className="proto-subtitle">
               {mode === 'login'
                 ? 'Access the ClaimRunner prototype.'
-                : 'Sign up to start filing your small claim.'}
+                : mode === 'signup'
+                ? 'Sign up to start filing your small claim.'
+                : 'Check whether your dispute qualifies for small claims court.'}
             </p>
 
             <div className="proto-tabs" role="tablist">
+              <button
+                role="tab"
+                aria-selected={mode === 'eligibility'}
+                className={mode === 'eligibility' ? 'active' : ''}
+                onClick={() => switchMode('eligibility')}
+              >
+                Check eligibility
+              </button>
               <button
                 role="tab"
                 aria-selected={mode === 'login'}
@@ -135,6 +190,9 @@ export default function Prototype() {
               </button>
             </div>
 
+            {mode === 'eligibility' ? (
+              <EligibilityCheck onGoToSignup={() => switchMode('signup')} />
+            ) : (
             <form className="proto-form" onSubmit={handleSubmit}>
               {mode === 'signup' && (
                 <>
@@ -189,6 +247,7 @@ export default function Prototype() {
                   : (mode === 'login' ? 'Log in' : 'Sign up')}
               </button>
             </form>
+            )}
           </div>
         )}
       </div>

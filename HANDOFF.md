@@ -183,7 +183,7 @@ The template PDF has two misspelled field names that must be used exactly as-is:
 
 ## 4. Database Schemas
 
-Migrations live in `server/supabase/migrations/`. Run them in order: `0001_init.sql`, `0002_add_pdf_extra_fields.sql`, then `0003_split_plaintiff_defendant.sql`.
+Migrations live in `server/supabase/migrations/`. Run them in order: `0001_init.sql`, `0002_add_pdf_extra_fields.sql`, `0003_split_plaintiff_defendant.sql`, then `0004_eligibility_forms.sql`.
 
 ### `plaintiffs`
 
@@ -191,19 +191,22 @@ Platform users who file claims. This is the table auth will link to via `auth_us
 
 ```sql
 create table plaintiffs (
-  id           uuid        primary key default gen_random_uuid(),
-  name         text        not null,
-  dob          date,
-  address      text,
-  city         text,
-  state        text,
-  zip          text,
-  phone        text,
-  email        text,
-  auth_user_id uuid        unique references auth.users(id) on delete cascade,
-  created_at   timestamptz not null default now()
+  id                  uuid        primary key default gen_random_uuid(),
+  name                text        not null,
+  dob                 date,
+  address             text,
+  city                text,
+  state               text,
+  zip                 text,
+  phone               text,
+  email               text,
+  auth_user_id        uuid        unique references auth.users(id) on delete cascade,
+  eligibility_form_id uuid        unique references eligibility_forms(id) on delete set null,
+  created_at          timestamptz not null default now()
 );
 ```
+
+`eligibility_form_id` (added in migration `0004`) is an optional link to the eligibility form the user submitted before signing up. `on delete set null` means deleting the eligibility row only clears this pointer — the plaintiff is otherwise untouched. The `unique` constraint (many NULLs allowed) prevents two accounts claiming the same form.
 
 ### `defendants`
 
@@ -240,6 +243,21 @@ create table pdf_template (
 Index: `idx_pdf_template_field_schema` GIN on `(field_schema)`.
 
 The seeded row has id `e4f58acc-3275-4fa1-b628-b3d1f2c5006b`, name `'Notice of Small Claim'`.
+
+### `eligibility_forms`
+
+Standalone submissions of the eligibility questionnaire (added in migration `0004`). Created by unauthenticated visitors via `POST /api/eligibility-forms`. `answers` is a free-form JSONB blob so the questionnaire can change without a migration; `eligible` optionally stores the computed outcome.
+
+```sql
+create table eligibility_forms (
+  id         uuid        primary key default gen_random_uuid(),
+  answers    jsonb       not null default '{}',
+  eligible   boolean,
+  created_at timestamptz not null default now()
+);
+```
+
+The link back to a plaintiff lives on `plaintiffs.eligibility_form_id` (see above), not here. To measure form → signup conversion: compare `count(*)` of `eligibility_forms` against `count(*)` of `plaintiffs where eligibility_form_id is not null`.
 
 ### `case_steps`
 
@@ -414,12 +432,15 @@ Creates a Supabase Auth account and a linked `plaintiffs` row in one step.
 
 ```jsonc
 {
-  "name": "string",     // required
-  "email": "string",    // required
-  "password": "string", // required
-  "phone": "string"     // optional — stored on the plaintiffs row
+  "name": "string",                // required
+  "email": "string",               // required
+  "password": "string",            // required
+  "phone": "string",               // optional — stored on the plaintiffs row
+  "eligibility_form_id": "uuid"    // optional — links the account to a submitted eligibility form
 }
 ```
+
+**Note on `eligibility_form_id`:** linking is best-effort. If the id is invalid or the form was deleted between submission and signup, the account is still created (without the link) rather than failing — the failure is logged server-side.
 
 **Response `201`:**
 
@@ -513,6 +534,38 @@ Returns the logged-in plaintiff's profile row.
 **Errors:**
 - `401` — missing, invalid, or expired token; or no `plaintiffs` row linked to the auth user.
 - `502` — network error during token validation.
+
+---
+
+### `POST /api/eligibility-forms`
+
+Record an eligibility questionnaire submission. **Unauthenticated** — visitors fill this out before they have an account.
+
+**Request body:**
+
+```jsonc
+{
+  "answers": { ... },   // optional — free-form object; defaults to {}
+  "eligible": true       // optional — boolean outcome of the check
+}
+```
+
+**Response `201`** — the created `eligibility_forms` row:
+
+```jsonc
+{
+  "id": "uuid",
+  "answers": { ... },
+  "eligible": true | false | null,
+  "created_at": "ISO timestamp"
+}
+```
+
+Store the returned `id` client-side (e.g. localStorage) and pass it to `POST /api/auth/signup` as `eligibility_form_id` if the visitor goes on to create an account.
+
+**Errors:**
+- `400` — `answers` is not an object, or `eligible` is not a boolean.
+- `502` — Supabase error.
 
 ---
 
@@ -830,9 +883,13 @@ Advances a case to the next step in the ordered sequence. The server computes th
 ### Signup and first case
 
 ```
-1. POST /api/auth/signup  { name, email, password }
+0. (optional) POST /api/eligibility-forms  { answers, eligible }
+     → { id: form_uuid, ... }   (store form_uuid client-side)
+
+1. POST /api/auth/signup  { name, email, password, eligibility_form_id? }
      → { session: { access_token, ... }, plaintiff: { id, ... } }
-     (store access_token; plaintiff row is created automatically)
+     (store access_token; plaintiff row is created automatically and, if
+      eligibility_form_id was passed, linked to the eligibility form)
 
 2. POST /api/cases {                                       [Authorization: Bearer <token>]
      case_name, incident_date, claim_amount,

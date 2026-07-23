@@ -469,4 +469,77 @@
 
     strong { color: #0d1b3d; }
   }
+
+  /* ---- Eligibility check ---- */
+  .eligibility-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+
+    .proto-subtitle {
+      text-align: left;
+      margin: 0;
+      flex: 1;
+      min-width: 220px;
+    }
+  }
+
+  .eligibility-skip {
+    background: none;
+    border: none;
+    color: #106aed;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 0;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  .eligibility-result {
+    margin-top: 1.3rem;
+    border-radius: 12px;
+    padding: 1.2rem 1.3rem;
+    border: 1px solid;
+
+    h4 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+    p { margin: 0 0 0.7rem; font-size: 0.9rem; line-height: 1.5; }
+    ul { margin: 0 0 0.8rem; padding-left: 1.2rem; }
+    li { font-size: 0.88rem; margin-bottom: 0.35rem; line-height: 1.45; }
+
+    &.eligible {
+      background: #e9f8ee;
+      border-color: #b3e2c3;
+      h4 { color: #1a7f42; }
+      p { color: #2c5a3e; }
+    }
+
+    &.ineligible {
+      background: #fff6ec;
+      border-color: #f3d2a8;
+      h4 { color: #b06a12; }
+      p { color: #6b4a1e; }
+      li { color: #6b4a1e; }
+    }
+
+    .eligibility-save-note {
+      font-size: 0.82rem;
+      font-style: italic;
+      color: #8a97b3;
+    }
+  }
+
+  .case-prefill-note {
+    background: #eef4ff;
+    border: 1px solid #c7dbff;
+    color: #1c4e9c;
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
 }

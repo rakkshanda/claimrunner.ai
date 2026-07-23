@@ -84,11 +84,17 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
 // ---------------------------------------------------------------------------
 
 /** POST /api/auth/signup → { session, plaintiff }. Stores the token. */
-export async function signup(name, email, password, phone) {
+export async function signup(name, email, password, phone, eligibilityFormId) {
   try {
     const data = await request('/api/auth/signup', {
       method: 'POST',
-      body: { name, email, password, phone: phone || undefined },
+      body: {
+        name,
+        email,
+        password,
+        phone: phone || undefined,
+        eligibility_form_id: eligibilityFormId || undefined,
+      },
     });
     if (data?.session?.access_token) setToken(data.session.access_token);
     return data;
@@ -140,6 +146,23 @@ export async function updateMyProfile(patch) {
     return await request('/api/plaintiffs/me', { method: 'PATCH', body: patch, auth: true });
   } catch (err) {
     console.error('[api] updateMyProfile failed:', err);
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Eligibility endpoint
+// ---------------------------------------------------------------------------
+
+/** POST /api/eligibility-forms → created row (with id). Unauthenticated. */
+export async function submitEligibilityForm(answers, eligible) {
+  try {
+    return await request('/api/eligibility-forms', {
+      method: 'POST',
+      body: { answers, eligible },
+    });
+  } catch (err) {
+    console.error('[api] submitEligibilityForm failed:', err);
     throw err;
   }
 }

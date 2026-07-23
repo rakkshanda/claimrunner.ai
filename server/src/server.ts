@@ -13,6 +13,7 @@ import { getAuthUser, signIn, signOut, signUp } from './db/auth.js';
 import {
   createCase,
   createDefendant,
+  createEligibilityForm,
   createPlaintiff,
   deleteCase,
   deleteDefendant,
@@ -81,11 +82,12 @@ app.post(
   '/api/auth/signup',
   asyncHandler(async (req, res) => {
     try {
-      const { name, email, password, phone } = (req.body ?? {}) as {
+      const { name, email, password, phone, eligibility_form_id } = (req.body ?? {}) as {
         name?: string;
         email?: string;
         password?: string;
         phone?: string;
+        eligibility_form_id?: string;
       };
       if (!name?.trim() || !email?.trim() || !password) {
         console.error('[POST /api/auth/signup] Missing required field(s)');
@@ -94,12 +96,37 @@ app.post(
       }
 
       const { session, user } = await signUp(email.trim(), password);
-      const plaintiff = await createPlaintiff({
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone?.trim() || undefined,
-        auth_user_id: user.id,
-      });
+
+      // Link the eligibility form if one was submitted. This is best-effort:
+      // a bad/deleted id must NOT fail signup, so we create the plaintiff
+      // without the link and log the problem instead.
+      let linkedFormId: string | undefined = eligibility_form_id?.trim() || undefined;
+      let plaintiff;
+      try {
+        plaintiff = await createPlaintiff({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone?.trim() || undefined,
+          auth_user_id: user.id,
+          eligibility_form_id: linkedFormId,
+        });
+      } catch (err) {
+        if (linkedFormId) {
+          console.error(
+            `[POST /api/auth/signup] Failed to link eligibility form ${linkedFormId} (retrying without it):`,
+            err
+          );
+          linkedFormId = undefined;
+          plaintiff = await createPlaintiff({
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone?.trim() || undefined,
+            auth_user_id: user.id,
+          });
+        } else {
+          throw err;
+        }
+      }
 
       res.status(201).json({ session, plaintiff });
     } catch (err) {
@@ -165,6 +192,46 @@ app.get(
       res.status(200).json(req.plaintiff);
     } catch (err) {
       console.error('[GET /api/auth/me] Error:', err);
+      res.status(errorStatus(err)).json({ error: errorMessage(err) });
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Eligibility forms
+// ---------------------------------------------------------------------------
+
+// POST /api/eligibility-forms — record an eligibility questionnaire submission.
+// Unauthenticated: visitors fill this out before they have an account. The
+// returned id can later be passed to POST /api/auth/signup to tie the account
+// back to the form (used to measure form → signup conversion).
+app.post(
+  '/api/eligibility-forms',
+  asyncHandler(async (req, res) => {
+    try {
+      const { answers, eligible } = (req.body ?? {}) as {
+        answers?: Record<string, unknown>;
+        eligible?: boolean;
+      };
+
+      if (answers !== undefined && (typeof answers !== 'object' || Array.isArray(answers))) {
+        console.error('[POST /api/eligibility-forms] answers must be an object');
+        res.status(400).json({ error: 'answers must be an object' });
+        return;
+      }
+      if (eligible !== undefined && typeof eligible !== 'boolean') {
+        console.error('[POST /api/eligibility-forms] eligible must be a boolean');
+        res.status(400).json({ error: 'eligible must be a boolean' });
+        return;
+      }
+
+      const created = await createEligibilityForm({
+        answers: answers ?? {},
+        eligible,
+      });
+      res.status(201).json(created);
+    } catch (err) {
+      console.error('[POST /api/eligibility-forms] Error:', err);
       res.status(errorStatus(err)).json({ error: errorMessage(err) });
     }
   })

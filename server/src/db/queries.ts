@@ -6,6 +6,7 @@ import {
   CaseStepRow,
   CaseWithParties,
   DefendantRow,
+  EligibilityFormRow,
   NotFoundError,
   PlaintiffRow,
 } from '../types.js';
@@ -24,6 +25,7 @@ export async function createPlaintiff(input: {
   phone?: string;
   email?: string;
   auth_user_id?: string;
+  eligibility_form_id?: string;
 }): Promise<PlaintiffRow> {
   try {
     const rows = await supabaseRest<PlaintiffRow[]>({
@@ -141,6 +143,46 @@ export async function deleteDefendant(defendantId: string): Promise<void> {
     });
   } catch (err) {
     console.error(`[queries] deleteDefendant(${defendantId}) failed:`, err);
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Eligibility forms
+// ---------------------------------------------------------------------------
+
+export async function createEligibilityForm(input: {
+  answers: Record<string, unknown>;
+  eligible?: boolean;
+}): Promise<EligibilityFormRow> {
+  try {
+    const rows = await supabaseRest<EligibilityFormRow[]>({
+      method: 'POST',
+      table: 'eligibility_forms',
+      body: input,
+      returnRepresentation: true,
+    });
+    if (!rows?.[0]) {
+      throw new Error('Insert returned no row');
+    }
+    return rows[0];
+  } catch (err) {
+    console.error('[queries] createEligibilityForm failed:', err);
+    throw err;
+  }
+}
+
+/** Returns the row if the id exists, else null (does not throw on not-found). */
+export async function getEligibilityForm(formId: string): Promise<EligibilityFormRow | null> {
+  try {
+    const rows = await supabaseRest<EligibilityFormRow[]>({
+      method: 'GET',
+      table: 'eligibility_forms',
+      query: { id: `eq.${formId}`, limit: '1' },
+    });
+    return rows?.[0] ?? null;
+  } catch (err) {
+    console.error(`[queries] getEligibilityForm(${formId}) failed:`, err);
     throw err;
   }
 }

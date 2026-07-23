@@ -100,6 +100,14 @@ export interface PlaintiffRow {
   phone: string | null;
   email: string | null;
   auth_user_id: string | null;
+  eligibility_form_id: string | null;
+  created_at: string;
+}
+
+export interface EligibilityFormRow {
+  id: string;
+  answers: Record<string, unknown>;
+  eligible: boolean | null;
   created_at: string;
 }
 
