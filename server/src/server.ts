@@ -9,7 +9,8 @@ import express, { NextFunction, Request, Response } from 'express';
 import { fillPdf } from './fillPdf.js';
 import { authenticate, extractBearerToken } from './middleware/authenticate.js';
 import { buildFormDataFromCase } from './services/caseToFormData.js';
-import { getAuthUser, signIn, signOut, signUp } from './db/auth.js';
+import demandLetterRouter from './routes/demandLetter.js';
+import { signIn, signOut, signUp } from './db/auth.js';
 import {
   createCase,
   createDefendant,
@@ -635,7 +636,10 @@ app.post(
     }
   })
 );
-
+// ---------------------------------------------------------------------------
+// Demand Letter (RAG + PDF)
+// ---------------------------------------------------------------------------
+app.use('/api', demandLetterRouter);
 // ---------------------------------------------------------------------------
 // Case steps
 // ---------------------------------------------------------------------------

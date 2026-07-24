@@ -11,6 +11,47 @@ import {
   ValidationError,
 } from '../types.js';
 
+export interface DemandLetterData {
+  plaintiffName: string;
+  plaintiffAddress: string;
+  plaintiffCityStateZip: string;
+  plaintiffPhone: string;
+  plaintiffEmail: string;
+  defendantName: string;
+  defendantAddress: string;
+  defendantCityStateZip: string;
+  claimAmount: string;
+  incidentDate: string;
+  claimReason: string;
+  explanation: string;
+}
+
+export function buildDemandLetterData(caseRow: CaseWithParties): DemandLetterData {
+  if (!caseRow.plaintiff) {
+    throw new ValidationError('Case has no plaintiff — cannot generate Demand Letter');
+  }
+  if (!caseRow.defendant) {
+    throw new ValidationError('Case has no defendant — cannot generate Demand Letter');
+  }
+
+  const extra = (caseRow.pdf_extra_fields as Record<string, any>) ?? {};
+
+  return {
+    plaintiffName: caseRow.plaintiff.name,
+    plaintiffAddress: caseRow.plaintiff.address ?? '',
+    plaintiffCityStateZip: `${caseRow.plaintiff.city ?? ''}, ${caseRow.plaintiff.state ?? ''} ${caseRow.plaintiff.zip ?? ''}`.trim(),
+    plaintiffPhone: caseRow.plaintiff.phone ?? '',
+    plaintiffEmail: caseRow.plaintiff.email ?? '',
+    defendantName: caseRow.defendant.name,
+    defendantAddress: caseRow.defendant.address ?? '',
+    defendantCityStateZip: `${caseRow.defendant.city ?? ''}, ${caseRow.defendant.state ?? ''} ${caseRow.defendant.zip ?? ''}`.trim(),
+    claimAmount: Number(caseRow.claim_amount).toFixed(2),
+    incidentDate: caseRow.incident_date,
+    claimReason: caseRow.claim_reason,
+    explanation: (extra.explanation as string) || (extra.explanation_of_claim as string) || '',
+  };
+}
+
 function toParty(row: {
   name: string;
   address: string | null;
