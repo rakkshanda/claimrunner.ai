@@ -7,32 +7,63 @@ import { PDFDocument } from 'pdf-lib';
 import { getCaseWithParties } from '../db/queries.js';
 import { buildDemandLetterData } from '../services/caseToFormData.js';
 import { generateDemandNarrative } from '../services/ragService.js';
+import { authenticate } from '../middleware/authenticate.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
 
-router.post('/generate-demand-letter', async (req, res) => {
+// ---------------------------------------------------------------------------
+// POST /api/generate-demand-letter/narrative
+// Returns ONLY the Groq-authored narrative body, as JSON, for the review/edit
+// screen. This is the single source of truth the frontend should render into
+// its editable textarea — no more guessing at response shape.
+// ---------------------------------------------------------------------------
+router.post('/generate-demand-letter/narrative', authenticate, async (req, res) => {
   try {
     const { case_id } = req.body;
     if (!case_id) {
       return res.status(400).json({ error: 'case_id is required' });
     }
 
-    // 1. Fetch case and party details from Supabase using existing query helper
     const caseData = await getCaseWithParties(case_id);
+    const demandData = buildDemandLetterData(caseData);
+    const narrative = await generateDemandNarrative(demandData);
 
-    // 2. Format case data into structured demand letter input
+    return res.status(200).json({ narrative });
+  } catch (err: any) {
+    console.error('[demandLetter route] Error generating narrative:', err);
+    return res.status(500).json({ error: err.message || 'Failed to generate demand narrative' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/generate-demand-letter/pdf
+// Fills and returns the demand letter PDF.
+//
+// If `narrative` is present in the body (the user's edited text from the
+// review screen), it is used VERBATIM as the demandNarrative field — Groq is
+// NOT called again. This is what makes edits actually show up in the PDF.
+// If `narrative` is omitted, it falls back to generating fresh via Groq
+// (e.g. for a "download without reviewing" shortcut).
+// ---------------------------------------------------------------------------
+router.post('/generate-demand-letter/pdf', authenticate, async (req, res) => {
+  try {
+    const { case_id, narrative: editedNarrative } = req.body;
+    if (!case_id) {
+      return res.status(400).json({ error: 'case_id is required' });
+    }
+
+    const caseData = await getCaseWithParties(case_id);
     const demandData = buildDemandLetterData(caseData);
 
-    // 3. Generate formal narrative using LangChain
-    const narrativeText = await generateDemandNarrative(demandData);
+    const narrativeText =
+      typeof editedNarrative === 'string' && editedNarrative.trim().length > 0
+        ? editedNarrative
+        : await generateDemandNarrative(demandData);
 
-    // 4. Resolve path to your PDF template in server/templates/
     const templatePath = path.resolve(__dirname, '../../templates/demand-letter.pdf');
-
-    // 5. Read PDF template and fill fields directly with pdf-lib
     const templateBytes = await fs.readFile(templatePath);
     const pdfDoc = await PDFDocument.load(templateBytes);
     const form = pdfDoc.getForm();
@@ -40,7 +71,7 @@ router.post('/generate-demand-letter', async (req, res) => {
     const pdfFillPayload: Record<string, string> = {
       ...demandData,
       demandNarrative: narrativeText,
-      plaintiffSignature: demandData.plaintiffName, // Automatically uses plaintiff's name
+      plaintiffSignature: demandData.plaintiffName,
     };
 
     for (const [fieldName, value] of Object.entries(pdfFillPayload)) {
@@ -55,16 +86,13 @@ router.post('/generate-demand-letter', async (req, res) => {
     }
 
     form.updateFieldAppearances();
-
     const pdfBytes = await pdfDoc.save();
 
-    // 6. Return PDF stream in HTTP response
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=Demand_Letter_${case_id}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=Demand_Letter_${case_id}.pdf`);
     return res.send(Buffer.from(pdfBytes));
-
   } catch (err: any) {
-    console.error('[demandLetter route] Error generating demand letter:', err);
+    console.error('[demandLetter route] Error generating demand letter PDF:', err);
     return res.status(500).json({ error: err.message || 'Failed to generate demand letter' });
   }
 });

@@ -33,6 +33,7 @@ INSTRUCTIONS:
 3. State the exact amount owed (\${claimAmount})[cite: 85].
 4. Conclude by demanding payment or resolution within 14 days before legal action (small claims court) is initiated[cite: 93, 104, 173].
 5. Do NOT include greetings, header information, or signature lines — return ONLY the narrative paragraphs.
+6. Always make it three paragraphs.
   `);
 
   const chain = prompt.pipe(model);

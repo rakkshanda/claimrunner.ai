@@ -1,11 +1,4 @@
 // API client for the ClaimRunner backend (server/).
-// Base URL resolution (baked in at build time by CRA):
-//   1. REACT_APP_API_URL, if set in a root .env — explicit override.
-//   2. Dev mode (`npm start`): the CRA dev server runs on :3000 and the API
-//      on :5555, so we point at localhost:5555 (CORS is enabled server-side).
-//   3. Production build: '' — relative URLs, because the Express server
-//      serves the build itself, so the API is on the same origin. This keeps
-//      it working for testers visiting via LAN IP, not just localhost.
 const API_BASE =
   process.env.REACT_APP_API_URL ??
   (process.env.NODE_ENV === 'development' ? 'http://localhost:5555' : '');
@@ -83,7 +76,6 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
 // Auth endpoints
 // ---------------------------------------------------------------------------
 
-/** POST /api/auth/signup → { session, plaintiff }. Stores the token. */
 export async function signup(name, email, password, phone, eligibilityFormId) {
   try {
     const data = await request('/api/auth/signup', {
@@ -104,7 +96,6 @@ export async function signup(name, email, password, phone, eligibilityFormId) {
   }
 }
 
-/** POST /api/auth/login → { session, user }. Stores the token. */
 export async function login(email, password) {
   try {
     const data = await request('/api/auth/login', {
@@ -119,7 +110,6 @@ export async function login(email, password) {
   }
 }
 
-/** POST /api/auth/logout. Clears the stored token even if the call fails. */
 export async function logout() {
   try {
     await request('/api/auth/logout', { method: 'POST', auth: true });
@@ -130,7 +120,6 @@ export async function logout() {
   }
 }
 
-/** GET /api/auth/me → plaintiff profile row. */
 export async function getMe() {
   try {
     return await request('/api/auth/me', { auth: true });
@@ -140,7 +129,6 @@ export async function getMe() {
   }
 }
 
-/** PATCH /api/plaintiffs/me → updated plaintiff profile row. */
 export async function updateMyProfile(patch) {
   try {
     return await request('/api/plaintiffs/me', { method: 'PATCH', body: patch, auth: true });
@@ -154,7 +142,6 @@ export async function updateMyProfile(patch) {
 // Eligibility endpoint
 // ---------------------------------------------------------------------------
 
-/** POST /api/eligibility-forms → created row (with id). Unauthenticated. */
 export async function submitEligibilityForm(answers, eligible) {
   try {
     return await request('/api/eligibility-forms', {
@@ -192,7 +179,6 @@ export const CLAIM_REASONS = [
   'Other',
 ];
 
-/** GET /api/cases → the logged-in plaintiff's cases (newest first). */
 export async function listCases() {
   try {
     return await request('/api/cases', { auth: true });
@@ -202,7 +188,6 @@ export async function listCases() {
   }
 }
 
-/** POST /api/cases → created case row. */
 export async function createCase(caseData) {
   try {
     return await request('/api/cases', { method: 'POST', body: caseData, auth: true });
@@ -212,7 +197,6 @@ export async function createCase(caseData) {
   }
 }
 
-/** GET /api/cases/:id → case with plaintiff + defendant joined. */
 export async function getCase(caseId) {
   try {
     return await request(`/api/cases/${caseId}`);
@@ -222,7 +206,6 @@ export async function getCase(caseId) {
   }
 }
 
-/** PATCH /api/cases/:id → updated case row. Accepts case fields, defendant object, pdf_extra_fields. */
 export async function updateCase(caseId, patch) {
   try {
     return await request(`/api/cases/${caseId}`, { method: 'PATCH', body: patch, auth: true });
@@ -232,7 +215,6 @@ export async function updateCase(caseId, patch) {
   }
 }
 
-/** DELETE /api/cases/:id → removes the case and its linked defendant record. */
 export async function deleteCase(caseId) {
   try {
     return await request(`/api/cases/${caseId}`, { method: 'DELETE', auth: true });
@@ -242,7 +224,6 @@ export async function deleteCase(caseId) {
   }
 }
 
-/** GET /api/case-steps → ordered list of the 7 case steps. */
 export async function getCaseSteps() {
   try {
     return await request('/api/case-steps');
@@ -252,7 +233,6 @@ export async function getCaseSteps() {
   }
 }
 
-/** POST /api/cases/:id/fill → downloads the filled PDF in the browser. */
 export async function downloadCasePdf(caseId, filename = 'notice-of-small-claim-filled.pdf') {
   let response;
   try {
@@ -290,12 +270,76 @@ export async function downloadCasePdf(caseId, filename = 'notice-of-small-claim-
   }
 }
 
-/** PATCH /api/cases/:id/step → { case, nextStep }. */
 export async function advanceCaseStep(caseId) {
   try {
     return await request(`/api/cases/${caseId}/step`, { method: 'PATCH' });
   } catch (err) {
     console.error(`[api] advanceCaseStep(${caseId}) failed:`, err);
     throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Demand Letter endpoints
+// ---------------------------------------------------------------------------
+
+export async function getDemandLetterText(caseId) {
+  try {
+    const data = await request('/api/generate-demand-letter/narrative', {
+      method: 'POST',
+      body: { case_id: caseId },
+      auth: true,
+    });
+    return data?.narrative ?? '';
+  } catch (err) {
+    console.error(`[api] getDemandLetterText(${caseId}) failed:`, err);
+    throw err;
+  }
+}
+
+export async function generateDemandLetterPdf(caseId, narrative = null, filename = 'demand-letter.pdf') {
+  let response;
+  try {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    response = await fetch(`${API_BASE}/api/generate-demand-letter/pdf`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        case_id: caseId,
+        ...(narrative ? { narrative } : {}),
+      }),
+    });
+  } catch (err) {
+    console.error(`[api] generateDemandLetterPdf(${caseId}) network error:`, err);
+    throw new Error('Cannot reach the server. Is the backend running?');
+  }
+
+  if (!response.ok) {
+    let message = `PDF generation failed (${response.status})`;
+    try {
+      const json = await response.json();
+      if (json?.error) message = json.error;
+    } catch (err) {
+      console.error(`[api] generateDemandLetterPdf(${caseId}) error parse failed:`, err);
+    }
+    throw new Error(message);
+  }
+
+  try {
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(`[api] generateDemandLetterPdf(${caseId}) file save error:`, err);
+    throw new Error('Failed to download the demand letter PDF.');
   }
 }
