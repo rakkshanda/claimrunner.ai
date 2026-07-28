@@ -32,6 +32,7 @@ if not exist server\.env (
     echo SUPABASE_SERVICE_ROLE_KEY=sb_secret_Nw9-fm4SDUNtSarwjmMfDw_TYM_Yo7-
     echo PORT=5555
     echo PDF_TEMPLATE_PATH=./templates/notice-of-small-claim-september-2025.pdf
+    echo GROQ_API_KEY=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
   ) > server\.env
 ) else (
   echo server\.env already exists
