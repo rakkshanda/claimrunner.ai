@@ -1,21 +1,71 @@
-// Case detail view — step progress bar + every field the Notice of Small Claim
-// PDF needs: court info, claim details, plaintiff/defendant info, interpreters,
-// Servicemembers Civil Relief Act, and signature. Save persists everything;
-// Download PDF saves first, then downloads the filled form.
-
 import { useEffect, useState } from 'react';
 import {
   advanceCaseStep,
   CLAIM_REASONS,
   DIVISIONS,
   downloadCasePdf,
+  generateDemandLetterPdf,
   getCase,
   getCaseSteps,
+  getDemandLetterText,
   updateCase,
   updateMyProfile,
 } from '../api/client';
 
-// Placeholder copy for steps 2–7 until each step's real workflow is built.
+const buildFullLetterText = (narrative, plaintiff, defendant) => {
+  const formattedDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const pAddr = [plaintiff.address, plaintiff.city, plaintiff.state, plaintiff.zip].filter(Boolean).join(' ');
+  const dAddr = [defendant.address, defendant.city, defendant.state, defendant.zip].filter(Boolean).join(' ');
+
+  return [
+    formattedDate,
+    '',
+    plaintiff.name,
+    pAddr,
+    plaintiff.email,
+    '',
+    defendant.name,
+    dAddr,
+    '',
+    `Re: Payment request regarding ${defendant.address || 'claim'}`,
+    '',
+    `Dear ${defendant.name || 'Sir/Madam'},`,
+    '',
+    narrative,
+    '',
+    'Sincerely,',
+    '',
+    plaintiff.name,
+  ].filter((line) => line !== null && line !== undefined).join('\n');
+};
+
+// Pulls the narrative paragraphs back out of the full editable letter text,
+// using the "Dear ...," greeting and "Sincerely," sign-off as anchors. This
+// keeps the PDF's own header/greeting/salutation fields from being
+// duplicated inside the narrative box. Falls back to the full text if the
+// anchors were edited away, so nothing is silently dropped.
+const extractNarrative = (fullText) => {
+  const lines = fullText.split('\n');
+  const dearIndex = lines.findIndex((l) => l.trim().startsWith('Dear '));
+  const sincerelyIndex = lines
+    .map((l) => l.trim())
+    .lastIndexOf('Sincerely,');
+
+  if (dearIndex === -1 || sincerelyIndex === -1 || sincerelyIndex <= dearIndex) {
+    return fullText;
+  }
+
+  const narrativeLines = lines.slice(dearIndex + 1, sincerelyIndex);
+  while (narrativeLines.length && narrativeLines[0].trim() === '') narrativeLines.shift();
+  while (narrativeLines.length && narrativeLines[narrativeLines.length - 1].trim() === '') narrativeLines.pop();
+
+  return narrativeLines.join('\n');
+};
+
 const STEP_PLACEHOLDERS = {
   2: 'The defendant must be officially served with your Notice of Small Claim. This step will walk you through service options (sheriff, process server, or certified mail) and let you record proof of service.',
   3: 'Before trial, many small claims are resolved through settlement. This step will help you track settlement offers, communications with the defendant, and any agreement you reach.',
@@ -67,7 +117,11 @@ export default function CaseDetail({ caseId, onBack }) {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
-  // Court + case basics + claim details
+  const [viewDemandLetter, setViewDemandLetter] = useState(false);
+  const [letterText, setLetterText] = useState('');
+  const [loadingLetter, setLoadingLetter] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const [form, setForm] = useState({
     case_name: '', case_number: '', incident_date: '', claim_amount: '',
     claim_reason: CLAIM_REASONS[0], explanation: '',
@@ -75,20 +129,16 @@ export default function CaseDetail({ caseId, onBack }) {
     autoDamagesAccidentDate: '', otherReasonName: '',
   });
   const [additionalReasons, setAdditionalReasons] = useState([]);
-  const [claimantSame, setClaimantSame] = useState(false); // claimant = plaintiff
-  // Plaintiff (profile) info — the PDF pulls this from your plaintiff row
+  const [claimantSame, setClaimantSame] = useState(false);
   const [plaintiff, setPlaintiff] = useState({
     name: '', address: '', city: '', state: '', zip: '', phone: '', email: '',
   });
   const [defendant, setDefendant] = useState({
     name: '', address: '', city: '', state: '', zip: '', phone: '', email: '',
   });
-  // Interpreters
   const [interpP, setInterpP] = useState({ required: false, name: '', language: '' });
   const [interpD, setInterpD] = useState({ name: '', language: '' });
-  // Servicemembers Civil Relief Act
   const [smcr, setSmcr] = useState({ status: 'unknown', factsIfCovered: '', reasonIfNotCovered: '' });
-  // Signature
   const [signature, setSignature] = useState({ city: '', state: '', date: '', plaintiffName: '' });
 
   useEffect(() => {
@@ -180,7 +230,6 @@ export default function CaseDetail({ caseId, onBack }) {
 
   const allReasons = [form.claim_reason, ...additionalReasons];
 
-  // Saves everything; returns true on success (used by Download PDF too).
   const doSave = async () => {
     setError('');
     setSaved(false);
@@ -200,7 +249,6 @@ export default function CaseDetail({ caseId, onBack }) {
 
     setBusy(true);
     try {
-      // 1. Plaintiff profile (the PDF reads your contact info from it)
       await updateMyProfile({
         name: plaintiff.name.trim(),
         address: plaintiff.address.trim(),
@@ -211,7 +259,6 @@ export default function CaseDetail({ caseId, onBack }) {
         email: plaintiff.email.trim(),
       });
 
-      // 2. Case + defendant + all PDF extra fields
       const patch = {
         case_name: form.case_name.trim(),
         case_number: form.case_number.trim() || undefined,
@@ -296,7 +343,6 @@ export default function CaseDetail({ caseId, onBack }) {
     );
     if (!confirmed) return;
 
-    // On the filing step, save the form first so nothing is lost.
     if (currentStep.step_number === 1) {
       const ok = await doSave();
       if (!ok) return;
@@ -331,12 +377,97 @@ export default function CaseDetail({ caseId, onBack }) {
     }
   };
 
+  const handleDownloadDemandLetter = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      const narrativeOnly = extractNarrative(letterText);
+      await generateDemandLetterPdf(caseId, narrativeOnly, `demand-letter-${caseId}.pdf`);
+    } catch (err) {
+      console.error(`PDF download failed for case ${caseId}:`, err);
+      setError(err.message || 'Failed to download the demand letter PDF.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleOpenDemandLetterReview = async () => {
+    setLoadingLetter(true);
+    setError('');
+    try {
+      const narrative = await getDemandLetterText(caseId);
+      const fullLetterDraft = buildFullLetterText(
+        narrative || form.explanation || '',
+        plaintiff,
+        defendant
+      );
+      setLetterText(fullLetterDraft);
+      setViewDemandLetter(true);
+    } catch (err) {
+      console.error('Failed to load letter:', err);
+      setError('Unable to load formal demand letter preview.');
+    } finally {
+      setLoadingLetter(false);
+    }
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(buildFullLetterText(letterText, plaintiff, defendant));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (loading) return <p className="case-list-empty">Loading case…</p>;
   if (!caseRow) {
     return (
       <div>
         {error && <div className="proto-error" role="alert">{error}</div>}
         <button className="proto-btn secondary" onClick={onBack}>← Back to cases</button>
+      </div>
+    );
+  }
+
+  if (viewDemandLetter) {
+    return (
+      <div className="demand-letter-review-container">
+        <button className="case-back" onClick={() => setViewDemandLetter(false)}>
+          ← Back to case details
+        </button>
+
+        <div className="demand-letter-header">
+          <div className="demand-letter-topline">
+            <span className="subtitle-badge">DRAFT COMPLETE</span>
+
+            <div className="demand-letter-actions">
+              <button type="button" className="proto-btn secondary" onClick={handleCopyText}>
+                {copied ? 'Copied!' : 'Copy text'}
+              </button>
+              <button
+                type="button"
+                className="proto-btn primary"
+                onClick={handleDownloadDemandLetter}
+                disabled={downloading}
+              >
+                {downloading ? 'Downloading...' : 'Download PDF'}
+              </button>
+            </div>
+          </div>
+
+          <h4 className="main-title gradient-title">Review your formal demand letter</h4>
+          <p className="subtext">
+            Edit any wording below. ClaimRunner has not assessed legal rights, liability, or likely outcomes.
+          </p>
+        </div>
+
+        <div className="editable-letter-card">
+          <label className="card-label">EDITABLE LETTER</label>
+          <textarea
+            className="letter-textarea"
+            rows={22}
+            value={letterText}
+            onChange={(e) => setLetterText(e.target.value)}
+          />
+        </div>
       </div>
     );
   }
@@ -349,7 +480,6 @@ export default function CaseDetail({ caseId, onBack }) {
       <StepProgressBar steps={steps} currentStepId={caseRow.current_step_id} />
 
       {currentStep && currentStep.step_number !== 1 ? (
-        /* ---- Placeholder panels for steps 2–7 ---- */
         <div className="step-placeholder">
           <h4>{currentStep.step_name}</h4>
           <p>{STEP_PLACEHOLDERS[currentStep.step_number] || 'Details for this step are coming soon.'}</p>
@@ -357,9 +487,21 @@ export default function CaseDetail({ caseId, onBack }) {
 
           {error && <div className="proto-error" role="alert">{error}</div>}
 
-          <div className="case-detail-actions">
+          <div className="case-detail-actions" style={{ flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+            {currentStep.step_number === 2 && (
+              <button
+                type="button"
+                className="proto-btn primary"
+                onClick={handleOpenDemandLetterReview}
+                disabled={loadingLetter}
+                style={{ width: '100%', maxWidth: '320px' }}
+              >
+                {loadingLetter ? 'Generating letter…' : 'Review Formal Demand Letter →'}
+              </button>
+            )}
+
             {!isLastStep ? (
-              <button type="button" className="proto-btn" onClick={handleAdvanceStep} disabled={advancing}>
+              <button type="button" className="proto-btn secondary" onClick={handleAdvanceStep} disabled={advancing}>
                 {advancing ? 'Advancing…' : 'Continue to next step →'}
               </button>
             ) : (
@@ -368,323 +510,316 @@ export default function CaseDetail({ caseId, onBack }) {
           </div>
         </div>
       ) : (
-      <form className="proto-form" onSubmit={handleSave}>
-        {/* ---- Court information ---- */}
-        <h4 className="section-heading">Court information</h4>
-        <label>
-          Courthouse division
-          <select value={form.division} onChange={setField('division')}>
-            <option value="">— Select a courthouse —</option>
-            {DIVISIONS.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </label>
-        <div className="form-row">
+        <form className="proto-form" onSubmit={handleSave}>
+          <h4 className="section-heading">Court information</h4>
           <label>
-            Clerk <span className="optional">(if known)</span>
-            <input type="text" value={form.clerk} onChange={setField('clerk')} />
+            Courthouse division
+            <select value={form.division} onChange={setField('division')}>
+              <option value="">— Select a courthouse —</option>
+              {DIVISIONS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
           </label>
-          <label>
-            Small claim number <span className="optional">(if assigned)</span>
-            <input type="text" value={form.case_number} onChange={setField('case_number')} placeholder="Court-assigned" />
-          </label>
-        </div>
-
-        {/* ---- Case information ---- */}
-        <h4 className="section-heading">Case information</h4>
-        <label>
-          Case name
-          <input type="text" value={form.case_name} onChange={setField('case_name')} />
-        </label>
-        <div className="form-row">
-          <label>
-            Incident date
-            <input type="date" value={form.incident_date} onChange={setField('incident_date')} />
-          </label>
-          <label>
-            Claim amount ($)
-            <input type="number" min="0" step="0.01" value={form.claim_amount} onChange={setField('claim_amount')} />
-          </label>
-        </div>
-        <label>
-          Claimant name <span className="optional">(as it should appear on the claim line)</span>
-          <input
-            type="text"
-            value={claimantSame ? plaintiff.name : form.claimantName}
-            onChange={setField('claimantName')}
-            disabled={claimantSame}
-          />
-        </label>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={claimantSame}
-            onChange={(e) => { setClaimantSame(e.target.checked); touch(); }}
-          />
-          Same as plaintiff
-        </label>
-        <label>
-          Primary reason for claim
-          <select value={form.claim_reason} onChange={setField('claim_reason')}>
-            {CLAIM_REASONS.map((r) => (
-              <option key={r} value={r}>{prettyReason(r)}</option>
-            ))}
-          </select>
-        </label>
-        <fieldset className="checkbox-fieldset">
-          <legend>Additional reasons <span className="optional">(check all that apply)</span></legend>
-          <div className="checkbox-grid">
-            {CLAIM_REASONS.filter((r) => r !== form.claim_reason).map((r) => (
-              <label key={r} className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={additionalReasons.includes(r)}
-                  onChange={() => toggleAdditionalReason(r)}
-                />
-                {prettyReason(r)}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        {allReasons.includes('Auto_damages') && (
-          <label>
-            Auto damages — accident date
-            <input type="date" value={form.autoDamagesAccidentDate} onChange={setField('autoDamagesAccidentDate')} />
-          </label>
-        )}
-        {allReasons.includes('Other') && (
-          <label>
-            Other reason — describe
-            <input type="text" value={form.otherReasonName} onChange={setField('otherReasonName')} />
-          </label>
-        )}
-        <label>
-          Explanation of claim
-          <textarea
-            rows={4}
-            value={form.explanation}
-            onChange={setField('explanation')}
-            placeholder="Describe what happened and why you are owed this amount…"
-          />
-        </label>
-
-        {/* ---- Plaintiff (your) information ---- */}
-        <h4 className="section-heading">Your information <span className="optional">(appears on the PDF as Plaintiff)</span></h4>
-        <label>
-          Name
-          <input type="text" value={plaintiff.name} onChange={setPl('name')} />
-        </label>
-        <label>
-          Address
-          <input type="text" value={plaintiff.address} onChange={setPl('address')} />
-        </label>
-        <div className="form-row">
-          <label>
-            City
-            <input type="text" value={plaintiff.city} onChange={setPl('city')} />
-          </label>
-          <label>
-            State
-            <input type="text" value={plaintiff.state} onChange={setPl('state')} />
-          </label>
-          <label>
-            ZIP
-            <input type="text" value={plaintiff.zip} onChange={setPl('zip')} />
-          </label>
-        </div>
-        <div className="form-row">
-          <label>
-            Phone
-            <input type="tel" value={plaintiff.phone} onChange={setPl('phone')} />
-          </label>
-          <label>
-            Email
-            <input type="email" value={plaintiff.email} onChange={setPl('email')} />
-          </label>
-        </div>
-
-        {/* ---- Defendant information ---- */}
-        <h4 className="section-heading">Defendant information</h4>
-        <label>
-          Name
-          <input type="text" value={defendant.name} onChange={setDef('name')} placeholder="Person or business you are suing" />
-        </label>
-        <label>
-          Address
-          <input type="text" value={defendant.address} onChange={setDef('address')} />
-        </label>
-        <div className="form-row">
-          <label>
-            City
-            <input type="text" value={defendant.city} onChange={setDef('city')} />
-          </label>
-          <label>
-            State
-            <input type="text" value={defendant.state} onChange={setDef('state')} />
-          </label>
-          <label>
-            ZIP
-            <input type="text" value={defendant.zip} onChange={setDef('zip')} />
-          </label>
-        </div>
-        <div className="form-row">
-          <label>
-            Phone
-            <input type="tel" value={defendant.phone} onChange={setDef('phone')} />
-          </label>
-          <label>
-            Email
-            <input type="email" value={defendant.email} onChange={setDef('email')} />
-          </label>
-        </div>
-
-        {/* ---- Interpreters ---- */}
-        <h4 className="section-heading">Interpreter</h4>
-        <div className="radio-group" role="radiogroup" aria-label="Do you need an interpreter?">
-          <span className="radio-group-label">Do you need an interpreter?</span>
-          <label className="radio-label">
-            <input
-              type="radio"
-              name="interp-required"
-              checked={interpP.required === true}
-              onChange={() => { setInterpP((p) => ({ ...p, required: true })); touch(); }}
-            />
-            Yes
-          </label>
-          <label className="radio-label">
-            <input
-              type="radio"
-              name="interp-required"
-              checked={interpP.required === false}
-              onChange={() => { setInterpP((p) => ({ ...p, required: false })); touch(); }}
-            />
-            No
-          </label>
-        </div>
-        {interpP.required && (
           <div className="form-row">
             <label>
-              Interpreter name <span className="optional">(plaintiff)</span>
+              Clerk <span className="optional">(if known)</span>
+              <input type="text" value={form.clerk} onChange={setField('clerk')} />
+            </label>
+            <label>
+              Small claim number <span className="optional">(if assigned)</span>
+              <input type="text" value={form.case_number} onChange={setField('case_number')} placeholder="Court-assigned" />
+            </label>
+          </div>
+
+          <h4 className="section-heading">Case information</h4>
+          <label>
+            Case name
+            <input type="text" value={form.case_name} onChange={setField('case_name')} />
+          </label>
+          <div className="form-row">
+            <label>
+              Incident date
+              <input type="date" value={form.incident_date} onChange={setField('incident_date')} />
+            </label>
+            <label>
+              Claim amount ($)
+              <input type="number" min="0" step="0.01" value={form.claim_amount} onChange={setField('claim_amount')} />
+            </label>
+          </div>
+          <label>
+            Claimant name <span className="optional">(as it should appear on the claim line)</span>
+            <input
+              type="text"
+              value={claimantSame ? plaintiff.name : form.claimantName}
+              onChange={setField('claimantName')}
+              disabled={claimantSame}
+            />
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={claimantSame}
+              onChange={(e) => { setClaimantSame(e.target.checked); touch(); }}
+            />
+            Same as plaintiff
+          </label>
+          <label>
+            Primary reason for claim
+            <select value={form.claim_reason} onChange={setField('claim_reason')}>
+              {CLAIM_REASONS.map((r) => (
+                <option key={r} value={r}>{prettyReason(r)}</option>
+              ))}
+            </select>
+          </label>
+          <fieldset className="checkbox-fieldset">
+            <legend>Additional reasons <span className="optional">(check all that apply)</span></legend>
+            <div className="checkbox-grid">
+              {CLAIM_REASONS.filter((r) => r !== form.claim_reason).map((r) => (
+                <label key={r} className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={additionalReasons.includes(r)}
+                    onChange={() => toggleAdditionalReason(r)}
+                  />
+                  {prettyReason(r)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {allReasons.includes('Auto_damages') && (
+            <label>
+              Auto damages — accident date
+              <input type="date" value={form.autoDamagesAccidentDate} onChange={setField('autoDamagesAccidentDate')} />
+            </label>
+          )}
+          {allReasons.includes('Other') && (
+            <label>
+              Other reason — describe
+              <input type="text" value={form.otherReasonName} onChange={setField('otherReasonName')} />
+            </label>
+          )}
+          <label>
+            Explanation of claim
+            <textarea
+              rows={4}
+              value={form.explanation}
+              onChange={setField('explanation')}
+              placeholder="Describe what happened and why you are owed this amount…"
+            />
+          </label>
+
+          <h4 className="section-heading">Your information <span className="optional">(appears on the PDF as Plaintiff)</span></h4>
+          <label>
+            Name
+            <input type="text" value={plaintiff.name} onChange={setPl('name')} />
+          </label>
+          <label>
+            Address
+            <input type="text" value={plaintiff.address} onChange={setPl('address')} />
+          </label>
+          <div className="form-row">
+            <label>
+              City
+              <input type="text" value={plaintiff.city} onChange={setPl('city')} />
+            </label>
+            <label>
+              State
+              <input type="text" value={plaintiff.state} onChange={setPl('state')} />
+            </label>
+            <label>
+              ZIP
+              <input type="text" value={plaintiff.zip} onChange={setPl('zip')} />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              Phone
+              <input type="tel" value={plaintiff.phone} onChange={setPl('phone')} />
+            </label>
+            <label>
+              Email
+              <input type="email" value={plaintiff.email} onChange={setPl('email')} />
+            </label>
+          </div>
+
+          <h4 className="section-heading">Defendant information</h4>
+          <label>
+            Name
+            <input type="text" value={defendant.name} onChange={setDef('name')} placeholder="Person or business you are suing" />
+          </label>
+          <label>
+            Address
+            <input type="text" value={defendant.address} onChange={setDef('address')} />
+          </label>
+          <div className="form-row">
+            <label>
+              City
+              <input type="text" value={defendant.city} onChange={setDef('city')} />
+            </label>
+            <label>
+              State
+              <input type="text" value={defendant.state} onChange={setDef('state')} />
+            </label>
+            <label>
+              ZIP
+              <input type="text" value={defendant.zip} onChange={setDef('zip')} />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              Phone
+              <input type="tel" value={defendant.phone} onChange={setDef('phone')} />
+            </label>
+            <label>
+              Email
+              <input type="email" value={defendant.email} onChange={setDef('email')} />
+            </label>
+          </div>
+
+          <h4 className="section-heading">Interpreter</h4>
+          <div className="radio-group" role="radiogroup" aria-label="Do you need an interpreter?">
+            <span className="radio-group-label">Do you need an interpreter?</span>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="interp-required"
+                checked={interpP.required === true}
+                onChange={() => { setInterpP((p) => ({ ...p, required: true })); touch(); }}
+              />
+              Yes
+            </label>
+            <label className="radio-label">
+              <input
+                type="radio"
+                name="interp-required"
+                checked={interpP.required === false}
+                onChange={() => { setInterpP((p) => ({ ...p, required: false })); touch(); }}
+              />
+              No
+            </label>
+          </div>
+          {interpP.required && (
+            <div className="form-row">
+              <label>
+                Interpreter name <span className="optional">(plaintiff)</span>
+                <input
+                  type="text"
+                  value={interpP.name}
+                  onChange={(e) => { setInterpP((p) => ({ ...p, name: e.target.value })); touch(); }}
+                />
+              </label>
+              <label>
+                Language
+                <input
+                  type="text"
+                  value={interpP.language}
+                  onChange={(e) => { setInterpP((p) => ({ ...p, language: e.target.value })); touch(); }}
+                />
+              </label>
+            </div>
+          )}
+          <div className="form-row">
+            <label>
+              Interpreter name <span className="optional">(defendant, if needed)</span>
               <input
                 type="text"
-                value={interpP.name}
-                onChange={(e) => { setInterpP((p) => ({ ...p, name: e.target.value })); touch(); }}
+                value={interpD.name}
+                onChange={(e) => { setInterpD((d) => ({ ...d, name: e.target.value })); touch(); }}
               />
             </label>
             <label>
               Language
               <input
                 type="text"
-                value={interpP.language}
-                onChange={(e) => { setInterpP((p) => ({ ...p, language: e.target.value })); touch(); }}
+                value={interpD.language}
+                onChange={(e) => { setInterpD((d) => ({ ...d, language: e.target.value })); touch(); }}
               />
             </label>
           </div>
-        )}
-        <div className="form-row">
-          <label>
-            Interpreter name <span className="optional">(defendant, if needed)</span>
-            <input
-              type="text"
-              value={interpD.name}
-              onChange={(e) => { setInterpD((d) => ({ ...d, name: e.target.value })); touch(); }}
-            />
-          </label>
-          <label>
-            Language
-            <input
-              type="text"
-              value={interpD.language}
-              onChange={(e) => { setInterpD((d) => ({ ...d, language: e.target.value })); touch(); }}
-            />
-          </label>
-        </div>
 
-        {/* ---- Servicemembers Civil Relief Act ---- */}
-        <h4 className="section-heading">Servicemembers Civil Relief Act</h4>
-        <div className="radio-group" role="radiogroup" aria-label="Is the defendant covered by the Servicemembers Civil Relief Act?">
-          <span className="radio-group-label">Is the defendant in active military service (covered by the Act)?</span>
-          {['yes', 'no', 'unknown'].map((s) => (
-            <label key={s} className="radio-label">
-              <input
-                type="radio"
-                name="smcr-status"
-                checked={smcr.status === s}
-                onChange={() => { setSmcr((v) => ({ ...v, status: s })); touch(); }}
+          <h4 className="section-heading">Servicemembers Civil Relief Act</h4>
+          <div className="radio-group" role="radiogroup" aria-label="Is the defendant covered by the Servicemembers Civil Relief Act?">
+            <span className="radio-group-label">Is the defendant in active military service (covered by the Act)?</span>
+            {['yes', 'no', 'unknown'].map((s) => (
+              <label key={s} className="radio-label">
+                <input
+                  type="radio"
+                  name="smcr-status"
+                  checked={smcr.status === s}
+                  onChange={() => { setSmcr((v) => ({ ...v, status: s })); touch(); }}
+                />
+                {s === 'unknown' ? "Don't know" : s.charAt(0).toUpperCase() + s.slice(1)}
+              </label>
+            ))}
+          </div>
+          {smcr.status === 'yes' && (
+            <label>
+              Facts supporting coverage
+              <textarea
+                rows={2}
+                value={smcr.factsIfCovered}
+                onChange={(e) => { setSmcr((v) => ({ ...v, factsIfCovered: e.target.value })); touch(); }}
               />
-              {s === 'unknown' ? "Don't know" : s.charAt(0).toUpperCase() + s.slice(1)}
             </label>
-          ))}
-        </div>
-        {smcr.status === 'yes' && (
-          <label>
-            Facts supporting coverage
-            <textarea
-              rows={2}
-              value={smcr.factsIfCovered}
-              onChange={(e) => { setSmcr((v) => ({ ...v, factsIfCovered: e.target.value })); touch(); }}
-            />
-          </label>
-        )}
-        {smcr.status === 'no' && (
-          <label>
-            Why the defendant is not covered
-            <textarea
-              rows={2}
-              value={smcr.reasonIfNotCovered}
-              onChange={(e) => { setSmcr((v) => ({ ...v, reasonIfNotCovered: e.target.value })); touch(); }}
-            />
-          </label>
-        )}
+          )}
+          {smcr.status === 'no' && (
+            <label>
+              Why the defendant is not covered
+              <textarea
+                rows={2}
+                value={smcr.reasonIfNotCovered}
+                onChange={(e) => { setSmcr((v) => ({ ...v, reasonIfNotCovered: e.target.value })); touch(); }}
+              />
+            </label>
+          )}
 
-        {/* ---- Signature ---- */}
-        <h4 className="section-heading">Signature</h4>
-        <div className="form-row">
+          <h4 className="section-heading">Signature</h4>
+          <div className="form-row">
+            <label>
+              Signed in city
+              <input type="text" value={signature.city} onChange={setSig('city')} />
+            </label>
+            <label>
+              State
+              <input type="text" value={signature.state} onChange={setSig('state')} />
+            </label>
+            <label>
+              Date
+              <input type="date" value={signature.date} onChange={setSig('date')} />
+            </label>
+          </div>
           <label>
-            Signed in city
-            <input type="text" value={signature.city} onChange={setSig('city')} />
+            Plaintiff name (signature)
+            <input type="text" value={signature.plaintiffName} onChange={setSig('plaintiffName')} />
           </label>
-          <label>
-            State
-            <input type="text" value={signature.state} onChange={setSig('state')} />
-          </label>
-          <label>
-            Date
-            <input type="date" value={signature.date} onChange={setSig('date')} />
-          </label>
-        </div>
-        <label>
-          Plaintiff name (signature)
-          <input type="text" value={signature.plaintiffName} onChange={setSig('plaintiffName')} />
-        </label>
 
-        {error && <div className="proto-error" role="alert">{error}</div>}
-        {saved && <div className="proto-success" role="status">Changes saved.</div>}
+          {error && <div className="proto-error" role="alert">{error}</div>}
+          {saved && <div className="proto-success" role="status">Changes saved.</div>}
 
-        <div className="case-detail-actions">
-          <button type="submit" className="proto-btn" disabled={busy || downloading || advancing}>
-            {busy ? 'Saving…' : 'Save changes'}
-          </button>
-          <button
-            type="button"
-            className="proto-btn secondary"
-            onClick={handleDownloadPdf}
-            disabled={busy || downloading || advancing}
-          >
-            {downloading ? 'Generating…' : 'Save & download PDF'}
-          </button>
-          <button
-            type="button"
-            className="proto-btn secondary"
-            onClick={handleAdvanceStep}
-            disabled={busy || downloading || advancing}
-            title="Saves the form, then moves the case to the next step"
-          >
-            {advancing ? 'Advancing…' : 'Continue to next step →'}
-          </button>
-        </div>
-      </form>
+          <div className="case-detail-actions">
+            <button type="submit" className="proto-btn" disabled={busy || downloading || advancing}>
+              {busy ? 'Saving…' : 'Save changes'}
+            </button>
+            <button
+              type="button"
+              className="proto-btn secondary"
+              onClick={handleDownloadPdf}
+              disabled={busy || downloading || advancing}
+            >
+              {downloading ? 'Generating…' : 'Save & download PDF'}
+            </button>
+            <button
+              type="button"
+              className="proto-btn secondary"
+              onClick={handleAdvanceStep}
+              disabled={busy || downloading || advancing}
+              title="Saves the form, then moves the case to the next step"
+            >
+              {advancing ? 'Advancing…' : 'Continue to next step →'}
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );

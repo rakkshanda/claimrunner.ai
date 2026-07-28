@@ -108,7 +108,7 @@ async function generateTemplate() {
   const pdfBytes = await pdfDoc.save();
   await fs.writeFile(path.join(outDir, 'demand-letter.pdf'), pdfBytes);
 
-  console.log('✅ Updated demand-letter.pdf template created!');
+  console.log('Updated demand-letter.pdf template created!');
 }
 
 generateTemplate().catch(console.error);
